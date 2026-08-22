@@ -15,7 +15,7 @@ Uso:
     python generar.py                                  # usa los Excel más recientes en datos/
     python generar.py "datos/Budgets anuales.xlsx" "datos/Seguimiento Budget.xlsx"
 """
-import sys, re, json, glob, datetime as dt
+import sys, re, json, glob, math, datetime as dt
 import pandas as pd
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
@@ -58,8 +58,8 @@ def label_cuenta(texto):
     return partes[1] if len(partes) > 1 else texto
 
 def parse_monto(s):
-    """'S/ 1,724.50 ' -> 1724.5 ; '-S/ 95.70 ' -> -95.7"""
-    if s is None:
+    """'S/ 1,724.50 ' -> 1724.5 ; '-S/ 95.70 ' -> -95.7 ; celda vacía de Excel (NaN) -> 0.0"""
+    if s is None or (isinstance(s, float) and math.isnan(s)):
         return 0.0
     if isinstance(s, (int, float)):
         return float(s)

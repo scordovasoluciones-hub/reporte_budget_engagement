@@ -58,6 +58,26 @@ El cruce entre fuentes se hace por el código de 3 dígitos de la subcuenta (`64
   exigible sin gastar), presupuesto no ejecutado (meses futuros, no es ahorro) y ahorro
   potencial proyectado (Budget − Forecast).
 
+## Contraseña de acceso
+
+El dashboard muestra una pantalla de bloqueo (contraseña) antes de revelar el contenido.
+**Importante — límite real de esta protección**: el sitio es un archivo HTML estático, así
+que la validación ocurre en el propio navegador del visitante. Cualquier persona con acceso
+al repositorio de GitHub (o a las herramientas de desarrollador del navegador) puede ver los
+datos igual, contraseña o no. Es una barrera contra quien simplemente recibe el link y lo
+abre — **no reemplaza tener el repositorio en privado** si la confidencialidad es un
+requisito real (lo cual, en un repo privado, requiere GitHub Pro/Team para poder seguir
+usando GitHub Pages).
+
+**Cómo cambiar la contraseña**: en `plantilla.html`, busca la constante `PASSWORD_HASH`
+(dentro del bloque `<script>`, sección "acceso con contraseña"). No se guarda la contraseña
+en texto plano, sino su hash SHA-256. Para generar el hash de una contraseña nueva:
+
+    python -c "import hashlib; print(hashlib.sha256('tu-contraseña-nueva'.encode()).hexdigest())"
+
+Copia el resultado en `PASSWORD_HASH`, corre `python generar.py`, y haz commit + push. La
+forma más simple: pídele a Claude que la cambie por ti y la publique.
+
 ## Refresco mensual — publicar para todos (3 pasos)
 
     1. Reemplaza "Seguimiento Budget.xlsx" en datos/ por la versión actualizada del mes

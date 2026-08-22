@@ -172,6 +172,17 @@ table.gantt td.tot{font-family:'Space Grotesk';font-weight:600;font-size:11px}
 .gcell.nodato{background:repeating-linear-gradient(45deg,#4fa3f7,#4fa3f7 3px,#0c1c3c 3px,#0c1c3c 6px)}
 .gcell.na{background:#0c1c3c66}
 
+table.matriz{border-collapse:collapse;width:100%;font-size:11px}
+table.matriz th,table.matriz td{padding:5px 3px;text-align:center;border-bottom:1px solid var(--line)}
+table.matriz th{color:var(--mut);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.2px}
+table.matriz td:first-child,table.matriz th:first-child{text-align:left;min-width:150px;position:sticky;left:0;background:var(--panel2);z-index:1}
+table.matriz td.rtot{font-family:'Space Grotesk';font-weight:600;font-size:10.5px;color:var(--mut)}
+.minibar{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:32px;width:20px;margin:0 auto}
+.minibar .mb{width:7px;border-radius:2px 2px 0 0;min-height:1px}
+.minibar .mb.b{background:var(--blue)}
+.minibar .mb.verde{background:var(--green)} .minibar .mb.ambar{background:var(--amber)} .minibar .mb.rojo{background:var(--red)}
+.minibar .mb.empty{background:#26386040;min-height:1px}
+
 table.dtab{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
 table.dtab th,table.dtab td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line)}
 table.dtab th:first-child,table.dtab td:first-child,table.dtab th:nth-child(2),table.dtab td:nth-child(2){text-align:left}
@@ -184,6 +195,39 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
 .svbox .d{font-size:11.3px;color:var(--dim);margin-top:3px}
 .svbox.real .v{color:var(--green)} .svbox.pend .v{color:var(--blue2)} .svbox.proj .v{color:var(--amber)}
 
+/* ---- lock screen ---- */
+#lockScreen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1400px 800px at 20% 10%,#132a52,var(--bg) 60%),var(--bg);overflow:hidden}
+.lockorb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;pointer-events:none}
+.lockorb.o1{width:420px;height:420px;background:#2b6fd6;top:-120px;left:-100px;animation:lockdrift1 16s ease-in-out infinite}
+.lockorb.o2{width:360px;height:360px;background:#46c79a33;bottom:-140px;right:-80px;animation:lockdrift2 20s ease-in-out infinite}
+.lockorb.o3{width:280px;height:280px;background:#f4a93b22;top:40%;right:10%;animation:lockdrift3 24s ease-in-out infinite}
+@keyframes lockdrift1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,40px)}}
+@keyframes lockdrift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-30px)}}
+@keyframes lockdrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,30px) scale(1.1)}}
+.lockcard{position:relative;z-index:1;width:min(380px,90vw);background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border:1px solid var(--line);border-radius:20px;padding:36px 32px 28px;text-align:center;
+  box-shadow:0 20px 60px -20px #000a,0 0 0 1px #4fa3f712;
+  animation:lockin .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes lockin{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.lockicon{width:52px;height:52px;margin:0 auto 16px;border-radius:14px;background:#0c1c3c;border:1px solid var(--line);
+  display:grid;place-items:center;animation:lockpulse 3s ease-in-out infinite}
+.lockicon svg{width:24px;height:24px}
+@keyframes lockpulse{0%,100%{box-shadow:0 0 0 0 #4fa3f733}50%{box-shadow:0 0 0 8px #4fa3f700}}
+.lockcard h1{font-size:19px;margin-bottom:6px}
+.locksub{color:var(--mut);font-size:12px;margin-bottom:22px;line-height:1.5}
+.lockrow{display:flex;gap:8px}
+.lockrow input{flex:1;background:#0c1c3c;color:var(--txt);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;font-family:'Inter',sans-serif;font-size:13.5px;min-width:0}
+.lockrow input:focus{outline:1px solid var(--blue)}
+.lockrow button{background:var(--blue);border:0;color:#06152e;border-radius:10px;padding:11px 16px;
+  font-family:'Space Grotesk';font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s;flex:0 0 auto}
+.lockrow button:hover{background:var(--blue2)}
+.lockerr{color:var(--red);font-size:11.8px;margin-top:11px;min-height:16px}
+.lockcard.shake{animation:lockshake .4s}
+@keyframes lockshake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}
+  30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+
 @media(max-width:900px){
   .kstrip{grid-template-columns:repeat(2,1fr)} .grid2,.grid3,.ins,.savingsgrid{grid-template-columns:1fr}
   h2{font-size:21px}
@@ -193,6 +237,19 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
 </style>
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lockorb o1"></div><div class="lockorb o2"></div><div class="lockorb o3"></div>
+  <div class="lockcard" id="lockCard">
+    <div class="lockicon"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="#7ed0ff" stroke-width="1.8"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="#7ed0ff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    <h1>Budget Engagement</h1>
+    <div class="locksub">Acceso restringido · Área de Engagement (SDS) · Compassion Perú</div>
+    <div class="lockrow">
+      <input type="password" id="lockInput" placeholder="Contraseña" autocomplete="off">
+      <button id="lockBtn">Ingresar</button>
+    </div>
+    <div class="lockerr" id="lockErr">&nbsp;</div>
+  </div>
+</div>
 <header>
   <div class="wrap">
     <div class="hrow">
@@ -260,7 +317,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
     <p class="lead">FY anterior está cerrado (12 meses). FY actual se compara en dos lecturas: año completo (budget) y <b>mismo período</b> (actual a la fecha vs. actual del año anterior en igual tramo del FY) — la comparación correcta mientras el FY actual esté incompleto.</p>
     <div class="grid2">
       <div class="card">
-        <h3>Budget vs. Actual por FY</h3>
+        <h3>Budget vs. Real por FY</h3>
         <div class="h3sub">FY actual: actual = acumulado a la fecha (YTD), no año completo.</div>
         <div class="cv h280"><canvas id="chCompFy"></canvas></div>
       </div>
@@ -313,7 +370,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
     <h2>Si el ritmo actual se mantiene, ¿dónde terminamos?</h2>
     <div class="grid2">
       <div class="card">
-        <h3>Budget vs. Actual YTD vs. Forecast — FY actual</h3>
+        <h3>Budget vs. Real YTD vs. Forecast — FY actual</h3>
         <div class="cv h240"><canvas id="chForecast"></canvas></div>
       </div>
       <div class="card">
@@ -321,7 +378,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
         <div class="caveat" style="margin-top:14px">
           <h4>⚠ Supuesto del método de proyección</h4>
           <ul>
-            <li>Forecast = Actual YTD + (promedio mensual de meses con dato real × meses fiscales restantes).</li>
+            <li>Forecast = Real YTD + (promedio mensual de meses con dato real × meses fiscales restantes).</li>
             <li>Es un <b>run-rate simple</b>, no un modelo estacional — no anticipa gastos puntuales conocidos (ej. campañas, viajes ya programados) que no estén en el histórico reciente.</li>
             <li>Si el mes más reciente del FY aún no tiene datos cargados, el forecast puede subestimar el gasto real — ver alertas de calidad de dato.</li>
           </ul>
@@ -384,7 +441,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
 
   <section>
     <div class="card">
-      <div class="cardhead"><h3>📈 1 · Budget vs. Actual acumulado</h3><div class="h3sub" id="acumSub"></div></div>
+      <div class="cardhead"><h3>📈 1 · Budget vs. Real acumulado</h3><div class="h3sub" id="acumSub"></div></div>
       <div class="cv h360"><canvas id="chAcumulado"></canvas></div>
     </div>
   </section>
@@ -414,7 +471,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
 
   <section>
     <div class="card">
-      <div class="cardhead"><h3>📊 5 · Actual vs. Budget mensual</h3><div class="h3sub">Detecta estacionalidad, picos y meses de sub/sobre-ejecución</div></div>
+      <div class="cardhead"><h3>📊 5 · Real vs. Budget mensual</h3><div class="h3sub">Detecta estacionalidad, picos y meses de sub/sobre-ejecución</div></div>
       <div class="cv h320"><canvas id="chMensual"></canvas></div>
     </div>
   </section>
@@ -438,6 +495,13 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
         <span><i class="gcell rojo" style="width:11px;height:11px"></i>Sobre-ejecutado</span>
         <span><i class="gcell nodato" style="width:11px;height:11px"></i>Sin gasto registrado (mes ya pasado)</span>
       </div>
+    </div>
+  </section>
+
+  <section id="secMatrizResp">
+    <div class="card">
+      <div class="cardhead"><h3>👥 Budget personal por responsable — mes a mes</h3><div class="h3sub" id="matrizRespSub">Cada celda: barra azul = budget asignado, barra de color = gasto real (verde a ritmo, ámbar/rojo desviado)</div></div>
+      <div id="matrizRespBody"></div>
     </div>
   </section>
 
@@ -644,9 +708,9 @@ function renderKstrip(){
   const k = kpis(FY_ACTUAL);
   const cards = [
     {cls:'', lbl:'Budget FY actual', val:fmt(k.budget), sub:`FY${FY_ACTUAL}`},
-    {cls:'', lbl:'Actual YTD', val:fmt(k.actual), sub:'Acumulado a la fecha'},
+    {cls:'', lbl:'Real YTD', val:fmt(k.actual), sub:'Acumulado a la fecha'},
     {cls:k.pctEjec>100?'r':'g', lbl:'% Ejecución', val:fmtPct(k.pctEjec), sub:`Tiempo transcurrido: ${fmtPct(k.pctTiempo)}`},
-    {cls:'', lbl:'Budget disponible', val:fmt(k.disponible), sub:'Budget − Actual YTD'},
+    {cls:'', lbl:'Budget disponible', val:fmt(k.disponible), sub:'Budget − Real YTD'},
     {cls:k.burnRate>115?'r':k.burnRate<85?'a':'g', lbl:'Burn Rate', val:fmtPct(k.burnRate,0), sub:'% ejecutado ÷ % tiempo'},
     {cls:'a', lbl:'Forecast de cierre', val:fmt(k.forecast), sub:'Run-rate simple'},
     {cls:'g', lbl:'Ahorro potencial', val:fmt(k.ahorroPotencial), sub:'Budget − Forecast (si aplica)'},
@@ -684,8 +748,8 @@ function renderCompFy(){
   charts.compFy = new Chart($('chCompFy'), {
     data:{ labels:[`FY${FY_ANTERIOR} (cerrado)`, `FY${FY_ACTUAL} (YTD)`],
       datasets:[
-        {type:'bar', label:'Budget', data:[kA.budget,kB.budget], backgroundColor:C.blue+'55', borderColor:C.blue, borderWidth:1.5, borderRadius:6},
-        {type:'bar', label:'Actual', data:[kA.actual,kB.actual], backgroundColor:C.green, borderRadius:6},
+        {type:'bar', label:'Budget', data:[kA.budget,kB.budget], backgroundColor:C.blue, borderRadius:6},
+        {type:'bar', label:'Real', data:[kA.actual,kB.actual], backgroundColor:C.green, borderRadius:6},
       ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
@@ -705,8 +769,8 @@ function renderMismoPeriodo(){
     type:'line',
     data:{ labels:MESES.slice(0,idx+1),
       datasets:[
-        {label:`FY${FY_ANTERIOR}`, data:antSerie, borderColor:C.mut, backgroundColor:C.mut+'22', tension:.3, fill:true},
-        {label:`FY${FY_ACTUAL}`, data:actSerie, borderColor:C.green, backgroundColor:C.green+'22', tension:.3, fill:true},
+        {label:`FY${FY_ACTUAL} (real)`, data:actSerie, borderColor:C.green, backgroundColor:C.green+'26', tension:.3, fill:true, borderWidth:2.5},
+        {label:`FY${FY_ANTERIOR} (referencia)`, data:antSerie, borderColor:C.mut, backgroundColor:'transparent', tension:.3, fill:false, borderDash:[6,4], borderWidth:2.5},
       ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
@@ -729,7 +793,7 @@ function renderVariaciones(){
   const rows = cats.map(c=>`<tr><td>${esc(c.cuentaLabel)}</td><td>${esc(c.subLabel)}</td>
     <td>${fmt(c.budget)}</td><td>${fmt(c.actual)}</td><td>${fmtPct(c.burn,0)}</td>
     <td><span class="badge ${c.clase==='rojo'?'r':c.clase==='ambar'?'a':'g'}">${c.clase==='rojo'?'🔴 sobre-ejecución':c.clase==='ambar'?'🟡 revisar':'🟢 a ritmo'}</span></td></tr>`).join('');
-  $('tblVariaciones').innerHTML = `<thead><tr><th>Cuenta</th><th>Subcuenta</th><th>Budget</th><th>Actual</th><th>Burn Rate</th><th>Estado</th></tr></thead><tbody>${rows}</tbody>`;
+  $('tblVariaciones').innerHTML = `<thead><tr><th>Cuenta</th><th>Subcuenta</th><th>Budget</th><th>Real</th><th>Burn Rate</th><th>Estado</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
 function renderPareto(){
@@ -762,8 +826,8 @@ function renderTendencia(){
     type:'line',
     data:{ labels:MESES,
       datasets:[
-        {label:`FY${FY_ANTERIOR} acumulado`, data:sa, borderColor:C.mut, backgroundColor:'transparent', tension:.3, borderDash:[5,3]},
-        {label:`FY${FY_ACTUAL} acumulado`, data:sb, borderColor:C.green, backgroundColor:C.green+'1a', tension:.3, fill:true, spanGaps:false},
+        {label:`FY${FY_ACTUAL} real acumulado`, data:sb, borderColor:C.green, backgroundColor:C.green+'26', tension:.3, fill:true, spanGaps:false, borderWidth:2.5},
+        {label:`FY${FY_ANTERIOR} real acumulado`, data:sa, borderColor:C.mut, backgroundColor:'transparent', tension:.3, fill:false, borderDash:[6,4], borderWidth:2.5},
       ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
@@ -776,7 +840,7 @@ function renderForecast(){
   destroyChart('forecast');
   charts.forecast = new Chart($('chForecast'), {
     type:'bar',
-    data:{ labels:['Budget','Actual YTD','Forecast de cierre'],
+    data:{ labels:['Budget','Real YTD','Forecast de cierre'],
       datasets:[{data:[k.budget,k.actual,k.forecast],
         backgroundColor:[C.blue, C.green, k.projVariance>0? C.red : C.amber], borderRadius:6}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
@@ -919,8 +983,8 @@ function renderSeguimientoTab(){
   charts.acumulado = new Chart($('chAcumulado'), {
     type:'line',
     data:{ labels:MESES, datasets:[
-      {label:'Budget acumulado', data:sb, borderColor:C.blue, backgroundColor:C.blue+'1a', tension:.3, fill:true},
-      {label:'Actual acumulado', data:sa, borderColor:C.green, backgroundColor:C.green+'22', tension:.3, fill:true, spanGaps:false},
+      {label:'Real acumulado', data:sa, borderColor:C.green, backgroundColor:C.green+'26', tension:.3, fill:true, spanGaps:false, borderWidth:2.5},
+      {label:'Budget acumulado', data:sb, borderColor:C.blue, backgroundColor:'transparent', tension:.3, fill:false, borderDash:[6,4], borderWidth:2.5},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
@@ -941,7 +1005,7 @@ function renderSeguimientoTab(){
   destroyChart('bullet');
   charts.bullet = new Chart($('chBullet'), {
     type:'bar',
-    data:{ labels:['Budget','Actual YTD','Disponible','Forecast FY'],
+    data:{ labels:['Budget','Real YTD','Disponible','Forecast FY'],
       datasets:[{data:[k.budget,k.actual,Math.max(0,k.disponible),k.forecast],
         backgroundColor:[C.blue,C.green,C.blue2,k.projVariance>0?C.red:C.amber], borderRadius:6}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
@@ -968,8 +1032,8 @@ function renderSeguimientoTab(){
   charts.mensual = new Chart($('chMensual'), {
     type:'bar',
     data:{ labels:MESES, datasets:[
-      {label:'Budget', data:bm, backgroundColor:C.blue+'55', borderColor:C.blue, borderWidth:1.5, borderRadius:4},
-      {label:'Actual', data:am.map((v,i)=> (segFy===FY_ANTERIOR||i<=idx)? v : null), backgroundColor:C.green, borderRadius:4},
+      {label:'Budget', data:bm, backgroundColor:C.blue, borderRadius:4},
+      {label:'Real', data:am.map((v,i)=> (segFy===FY_ANTERIOR||i<=idx)? v : null), backgroundColor:C.green, borderRadius:4},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
@@ -995,6 +1059,7 @@ function renderSeguimientoTab(){
   });
 
   renderGantt(segFy, idx);
+  renderMatrizResponsables(segFy);
 }
 
 function renderGantt(fy, idxDato){
@@ -1022,7 +1087,7 @@ function renderGantt(fy, idxDato){
       } else {
         estado = 'pendiente';
       }
-      return `<td title="${MESES[i]}: budget ${fmt(bMes)} · actual ${fmt(aMes)}"><span class="gcell ${estado}"></span></td>`;
+      return `<td title="${MESES[i]}: budget ${fmt(bMes)} · real ${fmt(aMes)}"><span class="gcell ${estado}"></span></td>`;
     }).join('');
     return `<tr><td>${esc(r.entregable)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.subcuentaLabel)}</span></td>${cells}<td class="tot">${fmt(r.total)}</td></tr>`;
   }).join('');
@@ -1037,6 +1102,49 @@ function clasificarCelda(bMes, aMes){
   return r>1+TOL ? 'rojo' : 'ambar';
 }
 
+function renderMatrizResponsables(fy){
+  const bpFy = BP.filter(p=>p.fy===fy && (!F.sub || p.cod===F.sub) && (!F.resp || p.responsable===F.resp));
+  const wrap = $('matrizRespBody');
+  if(!bpFy.length){
+    wrap.innerHTML = `<div style="color:var(--mut);font-size:12.8px;padding:8px 0">Sin desagregación de "Budget personales" para FY${fy} — esta vista se activa automáticamente desde el primer FY que tenga ese detalle cargado en "Budgets anuales.xlsx".</div>`;
+    return;
+  }
+  const resps = [...new Set(bpFy.map(p=>p.responsable))];
+  const rows = resps.map(resp=>{
+    const budget = Array(12).fill(0);
+    bpFy.filter(p=>p.responsable===resp).forEach(p=>{ if(p.mesIdx!=null) budget[p.mesIdx]+=p.monto; });
+    const real = Array(12).fill(0);
+    acFor(fy).filter(a=>a.responsable===resp).forEach(a=>{ if(a.mesIdx!=null) real[a.mesIdx]+=a.monto; });
+    return {resp, budget, real, total: suma(budget)};
+  }).sort((a,b)=>b.total-a.total);
+  const futuroLimite = fy===fyHoy()? idxHoyFiscal() : (fy>fyHoy()? -1 : 11);
+  const head = `<thead><tr><th>Responsable</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total budget</th></tr></thead>`;
+  const body = rows.map(r=>{
+    const cells = MESES.map((_,i)=>{
+      const b=r.budget[i], a=r.real[i];
+      const max = Math.max(b,a,1);
+      const hb = Math.max(2, Math.round(b/max*28));
+      const ha = Math.max(2, Math.round(a/max*28));
+      const futuro = i>futuroLimite;
+      const clase = futuro? 'empty' : clasificarCelda(b,a);
+      const barB = `<div class="mb b" style="height:${b>0?hb:2}px"></div>`;
+      const barA = `<div class="mb ${a>0?clase:'empty'}" style="height:${a>0?ha:2}px"></div>`;
+      return `<td title="${MESES[i]} · ${esc(r.resp)}: budget ${fmt(b)} · real ${fmt(a)}"><div class="minibar">${barB}${barA}</div></td>`;
+    }).join('');
+    return `<tr><td>${esc(r.resp)}</td>${cells}<td class="rtot">${fmt(r.total)}</td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="matriz">${head}<tbody>${body}</tbody></table></div>
+    <div class="legend">
+      <span><i style="background:var(--blue)"></i>Budget asignado</span>
+      <span><i style="background:var(--green)"></i>Real dentro de lo esperado</span>
+      <span><i style="background:var(--amber)"></i>Real sub-ejecutado</span>
+      <span><i style="background:var(--red)"></i>Real sobre-ejecutado / sin budget asignado</span>
+    </div>
+    <div class="caveat" style="margin-top:14px"><h4>⚠ Nota de calidad de dato</h4><ul>
+      <li>El cruce con el gasto real es por coincidencia exacta del nombre de responsable entre "Budget personales" y "Seguimiento". Un responsable en S/ 0 de real puede significar que aún no gastó, o que su gasto quedó registrado bajo otro nombre (ej. el bucket "ENG").</li>
+    </ul></div>`;
+}
+
 /* ============================================================
    CARGA DE EXCEL (vista previa) — mismo parsing que generar.py
    ============================================================ */
@@ -1044,7 +1152,7 @@ function cod3js(t){ if(typeof t!=='string') return null; const cab=t.split(' - '
 function cod4js(t){ if(typeof t!=='string') return null; const m=t.match(/^(\d{4})/); return m?m[1]:null; }
 function labelSubJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(' - '); return i>=0? t.slice(i+3): t; }
 function labelCuentaJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(':'); return i>=0? t.slice(i+1): t; }
-function parseMontoJs(v){ if(v==null) return 0; if(typeof v==='number') return v; const l=String(v).replace(/[^0-9.\-]/g,''); const f=parseFloat(l); return isFinite(f)?f:0; }
+function parseMontoJs(v){ if(v==null) return 0; if(typeof v==='number') return isFinite(v)?v:0; const l=String(v).replace(/[^0-9.\-]/g,''); const f=parseFloat(l); return isFinite(f)?f:0; }
 const MESES_GEN_COLS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
 const MES_ING_IDX = {July:0,August:1,September:2,October:3,November:4,December:5,January:6,February:7,March:8,April:9,May:10,June:11};
 
@@ -1132,6 +1240,40 @@ $('panelToggle').addEventListener('click', ()=>{
 });
 $('btnAplicar').addEventListener('click', renderAll);
 $('btnLimpiar').addEventListener('click', limpiarFiltros);
+
+/* ---------------------------- acceso con contraseña ----------------------------
+   Protección solo a nivel de interfaz: el archivo es HTML estático, así que la
+   validación ocurre en el propio navegador del visitante. No sustituye tener el
+   repositorio en privado si la confidencialidad es un requisito real — ver README. */
+const LOCK_KEY = 'begUnlocked_v1';
+const PASSWORD_HASH = '825913d4c9cf1ee3594850e7c91e95f57eb6c955bbcc4a25b4171fd6b6bde820'; // contraseña temporal: engagement2027
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function desbloquear(){
+  $('lockScreen').style.display = 'none';
+  document.documentElement.style.overflow = '';
+}
+function lockGetUnlocked(){ try{ return sessionStorage.getItem(LOCK_KEY) === '1'; }catch(e){ return false; } }
+function lockSetUnlocked(){ try{ sessionStorage.setItem(LOCK_KEY, '1'); }catch(e){ /* storage no disponible (modo privado, sandbox, etc.) — se volverá a pedir en la próxima carga */ } }
+async function intentarDesbloqueo(){
+  const val = $('lockInput').value;
+  const hash = await sha256Hex(val);
+  if(hash === PASSWORD_HASH){
+    lockSetUnlocked();
+    desbloquear();
+  } else {
+    $('lockErr').textContent = 'Contraseña incorrecta';
+    const card = $('lockCard');
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    $('lockInput').value = ''; $('lockInput').focus();
+  }
+}
+if(lockGetUnlocked()){ desbloquear(); }
+else { document.documentElement.style.overflow = 'hidden'; $('lockInput').focus(); }
+$('lockBtn').addEventListener('click', intentarDesbloqueo);
+$('lockInput').addEventListener('keydown', e=>{ if(e.key==='Enter') intentarDesbloqueo(); });
 
 /* ---------------------------- init ---------------------------- */
 initFiltros();
