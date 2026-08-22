@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Engagement · Compassion Perú</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0a1730; --bg2:#0d1d3d; --panel:#12244a; --panel2:#16294f; --line:#26386090;
+  --txt:#eaf0fb; --mut:#93a6c9; --dim:#5f739a;
+  --blue:#4fa3f7; --blue2:#7ed0ff; --amber:#f4a93b; --red:#e5595b; --green:#46c79a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:
+    radial-gradient(1200px 600px at 80% -5%, #16345f55, transparent),
+    radial-gradient(900px 500px at 0% 5%, #10265033, transparent),
+    var(--bg);
+  color:var(--txt); font-family:'Inter',system-ui,sans-serif; line-height:1.55;
+  -webkit-font-smoothing:antialiased; padding-bottom:60px}
+.wrap{max-width:1220px;margin:0 auto;padding:0 22px}
+h1,h2,h3,.num,.eyebrow{font-family:'Space Grotesk',sans-serif}
+
+header{position:sticky;top:0;z-index:20;
+  background:linear-gradient(180deg,#0a1730f2,#0a1730d0 70%,#0a173000);
+  backdrop-filter:blur(6px);padding:20px 0 14px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{width:40px;height:40px;flex:0 0 40px;border-radius:11px;
+  background:linear-gradient(135deg,var(--blue),#2b6fd6);display:grid;place-items:center;
+  box-shadow:0 4px 18px #2b6fd655}
+.logo svg{width:23px;height:23px}
+h1{font-size:20px;font-weight:600;letter-spacing:-.2px}
+.sub{color:var(--mut);font-size:12.5px;margin-top:1px}
+.stamp{text-align:right;color:var(--dim);font-size:11px;line-height:1.4}
+.stamp b{color:var(--blue2);font-weight:600}
+
+.kstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px 13px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
+.kpi.a::before{background:var(--amber)} .kpi.r::before{background:var(--red)} .kpi.g::before{background:var(--green)}
+.kpi .num{font-size:21px;font-weight:700;letter-spacing:-.4px;color:var(--blue2)}
+.kpi.a .num{color:var(--amber)} .kpi.r .num{color:var(--red)} .kpi.g .num{color:var(--green)}
+.kpi .lbl{font-size:10.5px;color:var(--mut);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+.kpi .sub2{font-size:10.5px;color:var(--dim);margin-top:3px}
+
+section{margin-top:44px}
+.eyebrow{font-size:11px;letter-spacing:2.5px;color:var(--blue);text-transform:uppercase;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.eyebrow::before{content:'';width:26px;height:2px;background:var(--blue);display:inline-block}
+h2{font-size:25px;font-weight:600;letter-spacing:-.6px;margin-bottom:5px}
+.lead{color:var(--mut);font-size:14px;max-width:800px;margin-bottom:20px}
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:22px 22px 18px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:2px}
+.card .h3sub{color:var(--mut);font-size:12.5px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.cv{position:relative;width:100%}
+.h240{height:240px} .h280{height:280px} .h320{height:320px} .h360{height:360px}
+
+.toggle{display:inline-flex;gap:4px;background:#0c1c3c;border:1px solid var(--line);border-radius:10px;padding:4px}
+.toggle button{background:none;border:0;color:var(--mut);font-family:'Space Grotesk';font-size:12.5px;font-weight:600;
+  padding:6px 12px;border-radius:7px;cursor:pointer;transition:.15s}
+.toggle button.on{background:var(--amber);color:#241503}
+.cardhead{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.cardhead h3{margin:0} .cardhead .h3sub{margin:0}
+
+.ins{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.insight{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:15px;padding:18px 19px;position:relative}
+.insight .tag{font-family:'Space Grotesk';font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:20px;display:inline-block;margin-bottom:9px}
+.tag.op{background:#4fa3f722;color:var(--blue2)} .tag.cap{background:#f4a93b22;color:var(--amber)}
+.tag.q{background:#e5595b22;color:#ff9092} .tag.win{background:#46c79a22;color:var(--green)}
+.insight h4{font-family:'Space Grotesk';font-size:14.5px;font-weight:600;margin-bottom:5px}
+.insight p{font-size:13px;color:var(--mut)}
+.insight p+p{margin-top:6px}
+.insight b{color:var(--txt);font-weight:600}
+
+.caveat{background:#3a1d0e40;border:1px solid #f4a93b33;border-radius:14px;padding:16px 19px;margin-top:16px}
+.caveat h4{font-family:'Space Grotesk';font-size:13.5px;color:var(--amber);margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.caveat ul{list-style:none;font-size:12.6px;color:var(--mut)}
+.caveat li{padding:3px 0 3px 18px;position:relative}
+.caveat li::before{content:'▸';position:absolute;left:0;color:var(--amber)}
+.caveat b{color:var(--txt)}
+
+footer{margin-top:50px;padding-top:22px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;text-align:center}
+
+.filterbar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:16px;padding:14px 16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:13px}
+.fgroup{display:flex;flex-direction:column;gap:4px}
+.fgroup label{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.fgroup select{background:#0c1c3c;color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:7px 9px;font-family:'Inter',sans-serif;font-size:12.5px;min-width:140px}
+.fgroup select:focus{outline:1px solid var(--blue)}
+.fbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px 13px;
+  font-family:'Space Grotesk';font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.fbtn:hover{border-color:var(--blue);color:var(--blue2)}
+.fbtn.primary{background:var(--blue);border-color:var(--blue);color:#06152e}
+.fspacer{flex:1 1 auto}
+.filecol{display:flex;flex-direction:column;gap:4px}
+.filecol label{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.filecol input[type=file]{font-size:11px;color:var(--mut);max-width:210px}
+#fileStatusA,#fileStatusS{font-size:11px;color:var(--dim);max-width:230px}
+.err{color:var(--red)!important} .ok{color:var(--green)!important}
+.previewbar{display:none;align-items:center;gap:10px;background:#3a1d0e55;border:1px solid #f4a93b55;
+  border-radius:11px;padding:10px 16px;margin-top:12px;font-size:12.5px;color:var(--amber)}
+.previewbar.on{display:flex}
+.previewbar b{color:var(--txt)}
+.activefilters{font-size:11.5px;color:var(--blue2);margin-top:8px;min-height:14px}
+
+.tabnav{display:flex;gap:6px;background:#0c1c3c;border:1px solid var(--line);border-radius:11px;padding:4px;margin-left:8px}
+.tabnav button{background:none;border:0;color:var(--mut);font-family:'Space Grotesk';font-size:12.5px;font-weight:600;
+  padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s}
+.tabnav button.on{background:var(--blue);color:#06152e}
+
+.panelhead{display:flex;align-items:center;justify-content:space-between;margin-top:16px;cursor:pointer;user-select:none}
+.panelhead .lbl2{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.collapsebtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:5px 11px;
+  font-family:'Space Grotesk';font-size:11.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.collapsebtn:hover{border-color:var(--blue);color:var(--blue2)}
+.collapsebtn .chev{transition:transform .2s}
+.collapsible{overflow:hidden;transition:max-height .25s ease, opacity .2s ease;max-height:900px;opacity:1}
+.collapsible.collapsed{max-height:0;opacity:0}
+.collapsebtn.collapsed .chev{transform:rotate(-90deg)}
+
+.badge{padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700;display:inline-block;white-space:nowrap}
+.badge.g{background:#46c79a22;color:var(--green)} .badge.r{background:#e5595b22;color:#ff9092}
+.badge.a{background:#f4a93b22;color:var(--amber)} .badge.n{background:#4fa3f722;color:var(--blue2)}
+.badge.dim{background:#5f739a22;color:var(--mut)}
+
+.gaugetrack{position:relative;height:28px;background:#0c1c3c;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:14px}
+.gaugefill{height:100%;border-radius:14px 0 0 14px;transition:width .3s}
+.gaugemark{position:absolute;top:-3px;bottom:-3px;width:3px;background:#fff;border-radius:2px}
+.gaugelabels{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:7px}
+.burnbig{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+.burnbig .n{font-family:'Space Grotesk';font-size:34px;font-weight:700}
+.burnbig .t{font-size:12.5px;color:var(--mut)}
+
+.ranklist{display:flex;flex-direction:column;gap:8px}
+.rankrow{display:flex;align-items:center;gap:12px;background:#0c1c3c;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rankrow .rk{font-family:'Space Grotesk';font-weight:700;color:var(--dim);width:20px;flex:0 0 20px}
+.rankrow .ri{flex:1;min-width:0}
+.rankrow .ri b{display:block;font-size:12.8px}
+.rankrow .ri span{font-size:11.2px;color:var(--mut)}
+.rankrow .rv{font-family:'Space Grotesk';font-weight:700;text-align:right;flex:0 0 auto;font-size:13px}
+
+.planlist{display:flex;flex-direction:column;gap:10px}
+.planitem{display:flex;gap:13px;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.planitem .pnum{font-family:'Space Grotesk';font-weight:700;color:var(--blue2);font-size:17px;flex:0 0 auto}
+.planitem .pb h4{font-family:'Space Grotesk';font-size:13.5px;margin-bottom:3px}
+.planitem .pb p{font-size:12.6px;color:var(--mut)}
+.planitem .pmeta{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.3px;color:var(--mut);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+.ganttwrap{overflow-x:auto;margin-top:6px}
+table.gantt{border-collapse:collapse;width:100%;font-size:11.3px;min-width:920px}
+table.gantt th,table.gantt td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
+table.gantt th{color:var(--mut);font-weight:600;font-size:9.8px;text-transform:uppercase;letter-spacing:.3px}
+table.gantt td:first-child,table.gantt th:first-child{text-align:left;min-width:210px;position:sticky;left:0;background:var(--panel2);z-index:1}
+table.gantt td.tot{font-family:'Space Grotesk';font-weight:600;font-size:11px}
+.gcell{width:32px;height:20px;border-radius:5px;display:inline-block}
+.gcell.pendiente{background:#1c2c4d}
+.gcell.verde{background:var(--green)}
+.gcell.ambar{background:var(--amber)}
+.gcell.rojo{background:var(--red)}
+.gcell.nodato{background:repeating-linear-gradient(45deg,#4fa3f7,#4fa3f7 3px,#0c1c3c 3px,#0c1c3c 6px)}
+.gcell.na{background:#0c1c3c66}
+
+table.dtab{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+table.dtab th,table.dtab td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line)}
+table.dtab th:first-child,table.dtab td:first-child,table.dtab th:nth-child(2),table.dtab td:nth-child(2){text-align:left}
+table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:uppercase;letter-spacing:.3px}
+
+.savingsgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.svbox{background:#0c1c3c;border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.svbox .t{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.svbox .v{font-family:'Space Grotesk';font-size:19px;font-weight:700;margin-top:4px}
+.svbox .d{font-size:11.3px;color:var(--dim);margin-top:3px}
+.svbox.real .v{color:var(--green)} .svbox.pend .v{color:var(--blue2)} .svbox.proj .v{color:var(--amber)}
+
+@media(max-width:900px){
+  .kstrip{grid-template-columns:repeat(2,1fr)} .grid2,.grid3,.ins,.savingsgrid{grid-template-columns:1fr}
+  h2{font-size:21px}
+  .filterbar{flex-direction:column;align-items:stretch}
+  .fgroup select{min-width:0;width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="hrow">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V9M9 18V5M14 18v-7M19 18V11" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg></div>
+        <div>
+          <h1>Budget Engagement</h1>
+          <div class="sub">Área de Engagement (SDS) · Compassion International Perú</div>
+        </div>
+      </div>
+      <div class="tabnav" id="tabNav">
+        <button data-view="ejecutivo" class="on">Análisis Ejecutivo</button>
+        <button data-view="seguimiento">Seguimiento</button>
+      </div>
+      <div class="stamp"><span id="stampFy"></span><br><span id="stampCorte"></span><br><span id="gen"></span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panelhead" id="panelToggle">
+    <span class="lbl2">Filtros y carga de datos</span>
+    <button class="collapsebtn" id="btnCollapse"><span class="chev">▾</span> Plegar</button>
+  </div>
+  <div class="collapsible" id="panelBody">
+    <div class="filterbar">
+      <div class="fgroup"><label>Cuenta</label><select id="fCuenta"><option value="">Todas</option></select></div>
+      <div class="fgroup"><label>Subcuenta</label><select id="fSub"><option value="">Todas</option></select></div>
+      <div class="fgroup"><label>Responsable</label><select id="fResp"><option value="">Todos</option></select></div>
+      <div class="fgroup"><label>Mes fiscal desde</label><select id="fMesDesde"></select></div>
+      <div class="fgroup"><label>Mes fiscal hasta</label><select id="fMesHasta"></select></div>
+      <button class="fbtn primary" id="btnAplicar">Aplicar filtros</button>
+      <button class="fbtn" id="btnLimpiar">Limpiar</button>
+      <div class="fspacer"></div>
+      <div class="filecol">
+        <label>Cargar "Budgets anuales.xlsx" (vista previa)</label>
+        <input type="file" id="fileAnuales" accept=".xlsx,.xls">
+        <span id="fileStatusA"></span>
+      </div>
+      <div class="filecol">
+        <label>Cargar "Seguimiento Budget.xlsx" (vista previa)</label>
+        <input type="file" id="fileSeg" accept=".xlsx,.xls">
+        <span id="fileStatusS"></span>
+      </div>
+    </div>
+    <div class="activefilters" id="activeFilters"></div>
+    <div class="previewbar" id="previewBar">⚠ <b>Vista previa activa</b> — mostrando datos del archivo cargado en tu navegador. No se ha publicado nada. <button class="fbtn" id="btnQuitarPreview" style="margin-left:auto">Volver a datos publicados</button></div>
+    <div class="kstrip" id="kstrip"></div>
+  </div>
+
+<!-- ============================= PESTAÑA A: ANÁLISIS EJECUTIVO ============================= -->
+<div id="viewEjecutivo">
+
+  <section id="secA">
+    <div class="eyebrow">A · Resumen Ejecutivo</div>
+    <h2>Lo que un gerente necesita saber en 60 segundos</h2>
+    <p class="lead">Hallazgos priorizados por impacto financiero, no por cantidad de observaciones.</p>
+    <div class="card"><ul id="resumenList" style="list-style:none;display:flex;flex-direction:column;gap:10px;font-size:13.3px;color:var(--mut)"></ul></div>
+  </section>
+
+  <section id="secC">
+    <div class="eyebrow">C · Comparación FY Anterior vs FY Actual</div>
+    <h2>¿Cómo estamos vs. el año fiscal ya cursado?</h2>
+    <p class="lead">FY anterior está cerrado (12 meses). FY actual se compara en dos lecturas: año completo (budget) y <b>mismo período</b> (actual a la fecha vs. actual del año anterior en igual tramo del FY) — la comparación correcta mientras el FY actual esté incompleto.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Budget vs. Actual por FY</h3>
+        <div class="h3sub">FY actual: actual = acumulado a la fecha (YTD), no año completo.</div>
+        <div class="cv h280"><canvas id="chCompFy"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Mismo período: FY actual vs. FY anterior</h3>
+        <div class="h3sub" id="mismoPeriodoSub"></div>
+        <div class="cv h280"><canvas id="chMismoPeriodo"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="secD">
+    <div class="eyebrow">D · Análisis de Variaciones y Concentración del Gasto</div>
+    <h2>Dónde está la desviación y dónde se concentra el presupuesto</h2>
+    <p class="lead">Variación vs. <b>ritmo esperado</b> (budget prorrateado al tiempo transcurrido), no vs. budget anual completo — así no se confunde presupuesto aún no exigible con desviación real.</p>
+    <div class="card">
+      <div class="cardhead"><h3>Variaciones por cuenta / subcuenta — FY actual</h3><div class="h3sub">Ordenado por impacto financiero absoluto</div></div>
+      <div class="cv h280" style="margin-bottom:18px"><canvas id="chTopDesv"></canvas></div>
+      <div style="overflow-x:auto"><table class="dtab" id="tblVariaciones"></table></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Concentración del gasto (Pareto)</h3>
+      <div class="h3sub">% del budget total FY actual que representan las categorías principales</div>
+      <div id="paretoTxt" style="font-size:13px;color:var(--mut)"></div>
+    </div>
+  </section>
+
+  <section id="secAhorro">
+    <div class="eyebrow">7 · Análisis de Ahorro</div>
+    <h2>Ahorro real vs. presupuesto no ejecutado vs. ahorro proyectado</h2>
+    <p class="lead">No todo presupuesto sin gastar es ahorro. Se separan tres conceptos distintos para el FY actual.</p>
+    <div class="savingsgrid">
+      <div class="svbox real"><div class="t">🟢 Ahorro real</div><div class="v" id="svReal"></div><div class="d">Budget ya exigible (meses transcurridos) que no se gastó. Es ahorro confirmado.</div></div>
+      <div class="svbox pend"><div class="t">⏳ Presupuesto no ejecutado</div><div class="v" id="svPend"></div><div class="d">Budget de meses futuros, aún no corresponde gastarlo. <b>No es ahorro.</b></div></div>
+      <div class="svbox proj"><div class="t">🔮 Ahorro potencial proyectado</div><div class="v" id="svProj"></div><div class="d">Budget FY − Forecast de cierre, si la tendencia actual se mantiene.</div></div>
+    </div>
+  </section>
+
+  <section id="secE">
+    <div class="eyebrow">E · Análisis de Tendencias</div>
+    <h2>Velocidad de ejecución: FY actual vs. FY anterior en el mismo punto del año</h2>
+    <p class="lead">Curvas acumuladas por mes fiscal (Jul→Jun) alineadas por punto del año, no por fecha calendario.</p>
+    <div class="card">
+      <div class="cv h320"><canvas id="chTendencia"></canvas></div>
+    </div>
+  </section>
+
+  <section id="secF">
+    <div class="eyebrow">F · Proyección de Cierre del FY</div>
+    <h2>Si el ritmo actual se mantiene, ¿dónde terminamos?</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Budget vs. Actual YTD vs. Forecast — FY actual</h3>
+        <div class="cv h240"><canvas id="chForecast"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="kstrip" style="grid-template-columns:1fr 1fr;margin-top:0" id="forecastKpis"></div>
+        <div class="caveat" style="margin-top:14px">
+          <h4>⚠ Supuesto del método de proyección</h4>
+          <ul>
+            <li>Forecast = Actual YTD + (promedio mensual de meses con dato real × meses fiscales restantes).</li>
+            <li>Es un <b>run-rate simple</b>, no un modelo estacional — no anticipa gastos puntuales conocidos (ej. campañas, viajes ya programados) que no estén en el histórico reciente.</li>
+            <li>Si el mes más reciente del FY aún no tiene datos cargados, el forecast puede subestimar el gasto real — ver alertas de calidad de dato.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="secGH">
+    <div class="eyebrow">G · H · Riesgos y Oportunidades</div>
+    <h2>Top 10 riesgos y Top 10 oportunidades — FY actual</h2>
+    <p class="lead">Priorizados por impacto financiero (S/), no por cantidad de meses con desviación.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>🚨 Top riesgos</h3>
+        <div class="h3sub">Sobre-ejecución vs. ritmo esperado</div>
+        <div class="ranklist" id="riesgosList"></div>
+      </div>
+      <div class="card">
+        <h3>🏆 Top oportunidades</h3>
+        <div class="h3sub">Sub-ejecución con espacio de reasignación</div>
+        <div class="ranklist" id="oportList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="secI">
+    <div class="eyebrow">I · Insights Gerenciales</div>
+    <h2>Lo que hay que decidir, no solo observar</h2>
+    <div class="ins" id="insightsGrid"></div>
+  </section>
+
+  <section id="secJ">
+    <div class="eyebrow">J · Plan de Acción</div>
+    <h2>Próximos pasos recomendados</h2>
+    <div class="planlist" id="planList"></div>
+  </section>
+
+  <section id="secAlertas">
+    <div class="eyebrow">Calidad del Dato</div>
+    <h2>Supuestos y alertas de la fuente</h2>
+    <div class="caveat" id="alertasBox"><h4>⚠ Alertas detectadas al procesar los Excel de origen</h4><ul id="alertasList"></ul></div>
+  </section>
+
+</div><!-- /viewEjecutivo -->
+
+<!-- ============================= PESTAÑA B: SEGUIMIENTO ============================= -->
+<div id="viewSeguimiento" style="display:none">
+
+  <section style="margin-top:24px">
+    <div class="cardhead" style="justify-content:space-between">
+      <div>
+        <div class="eyebrow">Seguimiento mensual</div>
+        <h2 style="margin-bottom:0">Avance de ejecución — <span id="segFyLabel"></span></h2>
+      </div>
+      <div class="toggle" id="segFyToggle"></div>
+    </div>
+    <p class="lead">6 gráficas de seguimiento + tracker de ejecución por categoría con alertas de color.</p>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="cardhead"><h3>📈 1 · Budget vs. Actual acumulado</h3><div class="h3sub" id="acumSub"></div></div>
+      <div class="cv h360"><canvas id="chAcumulado"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead"><h3>🎯 2 · % Ejecución vs. % Tiempo transcurrido</h3><div class="h3sub">Burn Rate = % ejecutado ÷ % tiempo transcurrido</div></div>
+        <div class="burnbig"><span class="n" id="burnNum"></span><span class="t" id="burnTxt"></span></div>
+        <div class="gaugetrack"><div class="gaugefill" id="gaugeFill"></div><div class="gaugemark" id="gaugeMark"></div></div>
+        <div class="gaugelabels"><span>0%</span><span id="gaugeMid">50%</span><span>100%+</span></div>
+        <div class="legend"><span><i style="background:var(--green)"></i>Saludable (85–115%)</span><span><i style="background:var(--amber)"></i>Sub-ejecución (&lt;85%)</span><span><i style="background:var(--red)"></i>Riesgo de sobre-ejecución (&gt;115%)</span></div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h3>💰 3 · Budget restante vs. Forecast</h3><div class="h3sub">¿Con el ritmo actual, terminamos dentro del presupuesto?</div></div>
+        <div class="cv h240"><canvas id="chBullet"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="cardhead"><h3>🚨 4 · Top 10 categorías con mayor desviación</h3><div class="h3sub">🟢 ahorro/a-ritmo · 🔴 sobre-ejecución · 🟡 sub-ejecución a revisar</div></div>
+      <div class="cv h360"><canvas id="chTop10Seg"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="cardhead"><h3>📊 5 · Actual vs. Budget mensual</h3><div class="h3sub">Detecta estacionalidad, picos y meses de sub/sobre-ejecución</div></div>
+      <div class="cv h320"><canvas id="chMensual"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="cardhead"><h3>🏆 6 · Matriz de riesgo presupuestario</h3><div class="h3sub">Eje X: % ejecutado · Eje Y: Burn Rate de la categoría · Tamaño: budget de la categoría</div></div>
+      <div class="cv h360"><canvas id="chMatriz"></canvas></div>
+      <div class="legend"><span><i style="background:var(--red)"></i>Alto presupuesto + alta ejecución = máxima prioridad</span><span><i style="background:var(--amber)"></i>Sub-ejecución a revisar</span><span><i style="background:var(--green)"></i>Bajo riesgo</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="cardhead"><h3>🗓 Tracker de ejecución por categoría</h3><div class="h3sub">Gasto pendiente, ejecutado dentro de lo esperado, o desviado — mes a mes, por línea de budget</div></div>
+      <div class="ganttwrap"><table class="gantt" id="ganttTable"></table></div>
+      <div class="legend">
+        <span><i class="gcell pendiente" style="width:11px;height:11px"></i>Pendiente (mes futuro)</span>
+        <span><i class="gcell verde" style="width:11px;height:11px"></i>Dentro de lo esperado (±<span id="tolTxt"></span>)</span>
+        <span><i class="gcell ambar" style="width:11px;height:11px"></i>Sub-ejecutado</span>
+        <span><i class="gcell rojo" style="width:11px;height:11px"></i>Sobre-ejecutado</span>
+        <span><i class="gcell nodato" style="width:11px;height:11px"></i>Sin gasto registrado (mes ya pasado)</span>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /viewSeguimiento -->
+
+<footer>
+  Reporte estático generado desde "Budgets anuales.xlsx" y "Seguimiento Budget.xlsx" — refleja el snapshot con el que
+  se generó, no se conecta en vivo a los archivos de origen. Datos organizacionales de Compassion Perú — Área de
+  Engagement (SDS). Para datos en vivo con refresco automático, la vía nativa es Power BI sobre el mismo SharePoint.
+</footer>
+</div><!-- /wrap -->
+
+<script>
+const D = __DATA__;
+let BG = D.budgetGeneral.slice();
+let BP = D.budgetPersonal.slice();
+let AC = D.actual.slice();
+const META = D.meta;
+const FY_ACTUAL = META.fyActual, FY_ANTERIOR = META.fyAnterior;
+const MESES = META.mesesFiscales;
+const TOL = META.toleranciaGantt;
+const MONEDA = META.moneda || 'S/';
+const C = {blue:'#4fa3f7', blue2:'#7ed0ff', amber:'#f4a93b', red:'#e5595b', green:'#46c79a', mut:'#93a6c9', line:'#26386090'};
+const $ = id => document.getElementById(id);
+let previewActiva = false;
+
+/* ---------------------------- filtros ---------------------------- */
+let F = {cuenta:'', sub:'', resp:'', mesDesde:0, mesHasta:11};
+let segFy = FY_ACTUAL;
+
+function initFiltros(){
+  const cuentas = [...new Map(BG.map(r=>[r.cuentaCod, r.cuentaLabel])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+  const subs = [...new Map(BG.map(r=>[r.cod, r.subcuentaLabel])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+  const resps = [...new Set([...BP.map(r=>r.responsable), ...AC.map(r=>r.responsable)])].sort();
+  fillSelect('fCuenta', cuentas.map(([v,l])=>({v,l})), 'Todas');
+  fillSelect('fSub', subs.map(([v,l])=>({v,l})), 'Todas');
+  fillSelect('fResp', resps.map(v=>({v,l:v})), 'Todos');
+  fillSelect('fMesDesde', MESES.map((m,i)=>({v:i,l:m})));
+  fillSelect('fMesHasta', MESES.map((m,i)=>({v:i,l:m})));
+  $('fMesHasta').value = 11;
+}
+function fillSelect(id, items, primeraEtq){
+  const el = $(id); const cur = el.value;
+  el.innerHTML = (primeraEtq!==undefined? `<option value="">${primeraEtq}</option>` : '') +
+    items.map(it=>`<option value="${it.v}">${it.l}</option>`).join('');
+  if([...el.options].some(o=>o.value===cur)) el.value = cur;
+}
+
+function leerFiltros(){
+  F.cuenta = $('fCuenta').value; F.sub = $('fSub').value; F.resp = $('fResp').value;
+  F.mesDesde = +$('fMesDesde').value; F.mesHasta = +$('fMesHasta').value;
+  if(F.mesDesde>F.mesHasta){ const t=F.mesDesde; F.mesDesde=F.mesHasta; F.mesHasta=t; }
+}
+function limpiarFiltros(){
+  $('fCuenta').value=''; $('fSub').value=''; $('fResp').value=''; $('fMesDesde').value=0; $('fMesHasta').value=11;
+  leerFiltros(); renderAll();
+}
+function pintarFiltrosActivos(){
+  const partes = [];
+  if(F.cuenta) partes.push('Cuenta: '+$('fCuenta').selectedOptions[0].text);
+  if(F.sub) partes.push('Subcuenta: '+$('fSub').selectedOptions[0].text);
+  if(F.resp) partes.push('Responsable: '+F.resp);
+  if(F.mesDesde>0 || F.mesHasta<11) partes.push('Meses: '+MESES[F.mesDesde]+' → '+MESES[F.mesHasta]);
+  $('activeFilters').textContent = partes.length? 'Filtros activos — '+partes.join(' · ') : '';
+}
+
+/* ---------------------------- helpers de fecha fiscal ---------------------------- */
+function fyDeFecha(m,y){ return m>=7? y+1 : y; }
+function idxFiscal(m){ return m>=7? m-7 : m+5; }
+function diasEnMes(m,y){ return new Date(y, m, 0).getDate(); }
+function tiempoTranscurridoFrac(fy){
+  const h = new Date(); const m = h.getMonth()+1, y = h.getFullYear();
+  const fyHoy = fyDeFecha(m,y);
+  if(fy < fyHoy) return 1;
+  if(fy > fyHoy) return 0;
+  const idx = idxFiscal(m), frac = h.getDate()/diasEnMes(m,y);
+  return Math.min(1, (idx+frac)/12);
+}
+function idxHoyFiscal(){ const h=new Date(); return idxFiscal(h.getMonth()+1); }
+function fyHoy(){ const h=new Date(); return fyDeFecha(h.getMonth()+1, h.getFullYear()); }
+
+/* ---------------------------- agregación filtrada ---------------------------- */
+function respCods(fy){
+  if(!F.resp) return null;
+  return new Set(BP.filter(p=>p.fy===fy && p.responsable===F.resp).map(p=>p.cod));
+}
+function bgFor(fy){
+  const rs = respCods(fy);
+  return BG.filter(r=> r.fy===fy
+    && (!F.cuenta || r.cuentaCod===F.cuenta)
+    && (!F.sub || r.cod===F.sub)
+    && (!rs || rs.has(r.cod)));
+}
+function acFor(fy){
+  return AC.filter(r=> r.fy===fy
+    && (!F.cuenta || r.cuentaCod===F.cuenta)
+    && (!F.sub || r.cod===F.sub)
+    && (!F.resp || r.responsable===F.resp));
+}
+function mesOk(i){ return i>=F.mesDesde && i<=F.mesHasta; }
+function budgetMensual(fy){ const a=Array(12).fill(0); bgFor(fy).forEach(r=>r.meses.forEach((v,i)=>{ if(mesOk(i)) a[i]+=v; })); return a; }
+function actualMensual(fy){ const a=Array(12).fill(0); acFor(fy).forEach(r=>{ if(r.mesIdx!=null && mesOk(r.mesIdx)) a[r.mesIdx]+=r.monto; }); return a; }
+function suma(arr){ return arr.reduce((a,b)=>a+b,0); }
+function budgetTotal(fy){ return suma(budgetMensual(fy)); }
+function actualTotal(fy){ return suma(actualMensual(fy)); }
+function ultimoMesConDato(fy){ let mx=-1; acFor(fy).forEach(r=>{ if(r.mesIdx!=null && r.mesIdx>mx) mx=r.mesIdx; }); return mx; }
+function mesesConDatoSet(fy){ const s=new Set(); acFor(fy).forEach(r=>{ if(r.mesIdx!=null) s.add(r.mesIdx); }); return s; }
+
+function kpis(fy){
+  const budget = budgetTotal(fy), actual = actualTotal(fy);
+  const frac = tiempoTranscurridoFrac(fy);
+  const budgetTranscurrido = budget*frac;
+  const pctEjec = budget? actual/budget*100 : null;
+  const pctTiempo = frac*100;
+  const burnRate = pctTiempo>0? (pctEjec/pctTiempo*100) : null;
+  const mesesDato = mesesConDatoSet(fy).size;
+  const mesesRestantes = Math.max(0, 12-mesesDato);
+  const promedioMensual = mesesDato? actual/mesesDato : 0;
+  const forecast = actual + promedioMensual*mesesRestantes;
+  const ahorroReal = Math.max(0, budgetTranscurrido-actual);
+  const sobreReal = Math.max(0, actual-budgetTranscurrido);
+  const noEjecutado = Math.max(0, budget-budgetTranscurrido);
+  const ahorroPotencial = Math.max(0, budget-forecast);
+  const riesgoProyectado = Math.max(0, forecast-budget);
+  return {fy,budget,actual,disponible:budget-actual,pctEjec,pctTiempo,burnRate,forecast,
+    projVariance:forecast-budget,ahorroReal,sobreReal,noEjecutado,ahorroPotencial,riesgoProyectado,
+    mesesDato,ultimoMes:ultimoMesConDato(fy),frac};
+}
+
+function categorias(fy){
+  const map = new Map();
+  bgFor(fy).forEach(r=>{
+    const key = r.cuentaCod+'|'+r.cod;
+    if(!map.has(key)) map.set(key,{cuentaCod:r.cuentaCod,cuentaLabel:r.cuentaLabel,cod:r.cod,subLabel:r.subcuentaLabel,
+      budget:0,meses:Array(12).fill(0),actual:0,actualMeses:Array(12).fill(0)});
+    const c = map.get(key);
+    c.budget += r.total; r.meses.forEach((v,i)=>{ if(mesOk(i)) c.meses[i]+=v; });
+  });
+  acFor(fy).forEach(r=>{
+    const key = r.cuentaCod+'|'+r.cod;
+    if(!map.has(key)) map.set(key,{cuentaCod:r.cuentaCod,cuentaLabel:r.cuentaLabel,cod:r.cod,subLabel:r.subcuentaLabel,
+      budget:0,meses:Array(12).fill(0),actual:0,actualMeses:Array(12).fill(0)});
+    const c = map.get(key);
+    if(r.mesIdx!=null && mesOk(r.mesIdx)){ c.actual += r.monto; c.actualMeses[r.mesIdx] += r.monto; }
+  });
+  const frac = tiempoTranscurridoFrac(fy);
+  return [...map.values()].filter(c=>c.budget>0 || c.actual!==0).map(c=>{
+    const budgetTranscurrido = c.budget*frac;
+    const pctEjec = c.budget? (c.actual/c.budget*100) : (c.actual>0? Infinity : 0);
+    const burn = frac>0? (pctEjec/(frac*100)*100) : (c.actual>0? Infinity : null);
+    let clase;
+    if(c.budget<=0 && c.actual>0) clase='rojo';
+    else if(burn===null) clase='verde';
+    else if(!isFinite(burn)) clase='rojo';
+    else if(burn>=85 && burn<=115) clase='verde';
+    else if(burn>115) clase='rojo';
+    else clase='ambar';
+    return Object.assign(c,{pctEjec,burn,budgetTranscurrido,variacionRitmo:budgetTranscurrido-c.actual,
+      variacionAnual:c.budget-c.actual,clase});
+  });
+}
+
+/* ---------------------------- formato ---------------------------- */
+function fmt(n){ if(n==null||!isFinite(n)) return '—'; const s = Math.round(Math.abs(n)).toLocaleString('es-PE'); return (n<0?'-':'')+MONEDA+' '+s; }
+function fmtK(n){ if(n==null||!isFinite(n)) return '—'; const abs=Math.abs(n); if(abs>=1000) return (n<0?'-':'')+MONEDA+' '+(abs/1000).toFixed(1)+'k'; return fmt(n); }
+function fmtPct(n,d){ if(n==null||!isFinite(n)) return '—'; return n.toFixed(d==null?1:d)+'%'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------------------------- charts ---------------------------- */
+let charts = {};
+function destroyChart(k){ if(charts[k]){ charts[k].destroy(); delete charts[k]; } }
+Chart.defaults.color = C.mut;
+Chart.defaults.font.family = "'Inter',sans-serif";
+Chart.defaults.borderColor = C.line;
+
+function colorPorClase(cl){ return cl==='rojo'?C.red : cl==='ambar'?C.amber : C.green; }
+
+/* ============================================================
+   RENDER PRINCIPAL
+   ============================================================ */
+function renderAll(){
+  leerFiltros();
+  pintarFiltrosActivos();
+  renderKstrip();
+  renderResumen();
+  renderCompFy();
+  renderMismoPeriodo();
+  renderVariaciones();
+  renderPareto();
+  renderAhorro();
+  renderTendencia();
+  renderForecast();
+  renderRiesgosOportunidades();
+  renderInsights();
+  renderPlanAccion();
+  renderAlertas();
+  renderSeguimientoTab();
+  $('stampFy').innerHTML = `FY actual: <b>FY${FY_ACTUAL}</b> · FY anterior: <b>FY${FY_ANTERIOR}</b>`;
+  $('stampCorte').textContent = 'Corte de datos: ' + META.actualizado;
+  $('gen').textContent = 'Generado ' + META.actualizado;
+}
+
+function renderKstrip(){
+  const k = kpis(FY_ACTUAL);
+  const cards = [
+    {cls:'', lbl:'Budget FY actual', val:fmt(k.budget), sub:`FY${FY_ACTUAL}`},
+    {cls:'', lbl:'Actual YTD', val:fmt(k.actual), sub:'Acumulado a la fecha'},
+    {cls:k.pctEjec>100?'r':'g', lbl:'% Ejecución', val:fmtPct(k.pctEjec), sub:`Tiempo transcurrido: ${fmtPct(k.pctTiempo)}`},
+    {cls:'', lbl:'Budget disponible', val:fmt(k.disponible), sub:'Budget − Actual YTD'},
+    {cls:k.burnRate>115?'r':k.burnRate<85?'a':'g', lbl:'Burn Rate', val:fmtPct(k.burnRate,0), sub:'% ejecutado ÷ % tiempo'},
+    {cls:'a', lbl:'Forecast de cierre', val:fmt(k.forecast), sub:'Run-rate simple'},
+    {cls:'g', lbl:'Ahorro potencial', val:fmt(k.ahorroPotencial), sub:'Budget − Forecast (si aplica)'},
+    {cls:k.riesgoProyectado>0?'r':'', lbl:'Riesgo de sobre-ejecución', val:fmt(k.riesgoProyectado), sub:'Forecast − Budget (si aplica)'},
+  ];
+  $('kstrip').innerHTML = cards.map(c=>`<div class="kpi ${c.cls}"><div class="num">${c.val}</div><div class="lbl">${c.lbl}</div><div class="sub2">${c.sub}</div></div>`).join('');
+}
+
+function renderResumen(){
+  const k = kpis(FY_ACTUAL);
+  const kAnt = kpis(FY_ANTERIOR);
+  const cats = categorias(FY_ACTUAL);
+  const top = [...cats].sort((a,b)=>Math.abs(b.variacionRitmo)-Math.abs(a.variacionRitmo))[0];
+  const puntos = [];
+  puntos.push(`El FY${FY_ACTUAL} lleva <b>${fmtPct(k.pctTiempo,0)}</b> de tiempo transcurrido y <b>${fmtPct(k.pctEjec,0)}</b> de budget ejecutado (Burn Rate ${fmtPct(k.burnRate,0)}) — ${k.burnRate>115?'ritmo de gasto por encima de lo esperado.':k.burnRate<85?'ritmo de gasto por debajo de lo esperado.':'ritmo de gasto alineado al calendario.'}`);
+  puntos.push(`Con el ritmo actual, la proyección de cierre es <b>${fmt(k.forecast)}</b> contra un budget de <b>${fmt(k.budget)}</b> (${k.projVariance>0?'sobre-ejecución proyectada de '+fmt(k.projVariance):'ahorro potencial proyectado de '+fmt(k.ahorroPotencial)}).`);
+  puntos.push(`El FY${FY_ANTERIOR} cerró con <b>${fmtPct(kAnt.pctEjec,0)}</b> de ejecución (${fmt(kAnt.actual)} de ${fmt(kAnt.budget)} presupuestados).`);
+  if(top) puntos.push(`La mayor desviación vs. ritmo esperado está en <b>${esc(top.subLabel)}</b> (${esc(top.cuentaLabel)}): ${top.variacionRitmo<0?'sobre-ejecutado en '+fmt(Math.abs(top.variacionRitmo)):'por debajo del ritmo esperado en '+fmt(top.variacionRitmo)}.`);
+  puntos.push(`Ahorro real acumulado a la fecha: <b>${fmt(k.ahorroReal)}</b> · Presupuesto aún no exigible (no es ahorro): <b>${fmt(k.noEjecutado)}</b>.`);
+  const sinDato = acFor(FY_ACTUAL).length? null : true;
+  if(k.ultimoMes < idxHoyFiscal() && fyHoy()===FY_ACTUAL) puntos.push(`Los datos de gasto real llegan hasta <b>${MESES[k.ultimoMes]}</b>; el mes en curso (${MESES[idxHoyFiscal()]}) aún no tiene carga — el % de ejecución probablemente subestima el gasto real más reciente.`);
+  const cuentaTop = [...new Map(cats.map(c=>[c.cuentaCod,0])).keys()].length;
+  const totalBudget = suma(cats.map(c=>c.budget));
+  const ordenPorBudget = [...cats].sort((a,b)=>b.budget-a.budget);
+  let acumPct=0, nCats=0;
+  for(const c of ordenPorBudget){ acumPct += totalBudget? c.budget/totalBudget*100:0; nCats++; if(acumPct>=80) break; }
+  puntos.push(`${nCats} de ${cats.length} categorías concentran ~80% del budget FY${FY_ACTUAL} — la gestión de riesgo debe priorizar ahí, no repartirse en todas por igual.`);
+  $('resumenList').innerHTML = puntos.slice(0,10).map(p=>`<li style="padding-left:18px;position:relative">
+    <span style="position:absolute;left:0;color:var(--blue)">▸</span>${p}</li>`).join('');
+}
+
+function renderCompFy(){
+  const kA = kpis(FY_ANTERIOR), kB = kpis(FY_ACTUAL);
+  destroyChart('compFy');
+  charts.compFy = new Chart($('chCompFy'), {
+    data:{ labels:[`FY${FY_ANTERIOR} (cerrado)`, `FY${FY_ACTUAL} (YTD)`],
+      datasets:[
+        {type:'bar', label:'Budget', data:[kA.budget,kB.budget], backgroundColor:C.blue+'55', borderColor:C.blue, borderWidth:1.5, borderRadius:6},
+        {type:'bar', label:'Actual', data:[kA.actual,kB.actual], backgroundColor:C.green, borderRadius:6},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+}
+
+function renderMismoPeriodo(){
+  const idx = Math.max(0, ultimoMesConDato(FY_ACTUAL));
+  $('mismoPeriodoSub').textContent = `Ambos FY sumados de ${MESES[0]} a ${MESES[idx]} (mes fiscal ${idx+1} de 12)`;
+  let antAcum=0, actAcum=0;
+  const antSerie=[], actSerie=[];
+  const bmA = actualMensual(FY_ANTERIOR), bmB = actualMensual(FY_ACTUAL);
+  for(let i=0;i<=idx;i++){ antAcum+=bmA[i]; actAcum+=bmB[i]; antSerie.push(antAcum); actSerie.push(actAcum); }
+  destroyChart('mismoPeriodo');
+  charts.mismoPeriodo = new Chart($('chMismoPeriodo'), {
+    type:'line',
+    data:{ labels:MESES.slice(0,idx+1),
+      datasets:[
+        {label:`FY${FY_ANTERIOR}`, data:antSerie, borderColor:C.mut, backgroundColor:C.mut+'22', tension:.3, fill:true},
+        {label:`FY${FY_ACTUAL}`, data:actSerie, borderColor:C.green, backgroundColor:C.green+'22', tension:.3, fill:true},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+}
+
+function renderVariaciones(){
+  const cats = categorias(FY_ACTUAL).sort((a,b)=>Math.abs(b.variacionRitmo)-Math.abs(a.variacionRitmo)).slice(0,15);
+  destroyChart('topDesv');
+  charts.topDesv = new Chart($('chTopDesv'), {
+    type:'bar',
+    data:{ labels:cats.map(c=>c.subLabel.length>26? c.subLabel.slice(0,26)+'…':c.subLabel),
+      datasets:[{label:'Variación vs. ritmo esperado', data:cats.map(c=>c.variacionRitmo),
+        backgroundColor:cats.map(c=>colorPorClase(c.clase)), borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>(c.raw>=0?'Por debajo del ritmo: ':'Sobre-ejecutado: ')+fmt(Math.abs(c.raw))}}},
+      scales:{x:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+  const rows = cats.map(c=>`<tr><td>${esc(c.cuentaLabel)}</td><td>${esc(c.subLabel)}</td>
+    <td>${fmt(c.budget)}</td><td>${fmt(c.actual)}</td><td>${fmtPct(c.burn,0)}</td>
+    <td><span class="badge ${c.clase==='rojo'?'r':c.clase==='ambar'?'a':'g'}">${c.clase==='rojo'?'🔴 sobre-ejecución':c.clase==='ambar'?'🟡 revisar':'🟢 a ritmo'}</span></td></tr>`).join('');
+  $('tblVariaciones').innerHTML = `<thead><tr><th>Cuenta</th><th>Subcuenta</th><th>Budget</th><th>Actual</th><th>Burn Rate</th><th>Estado</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderPareto(){
+  const cats = categorias(FY_ACTUAL);
+  const total = suma(cats.map(c=>c.budget));
+  const orden = [...cats].sort((a,b)=>b.budget-a.budget);
+  let acum=0; const top=[];
+  for(const c of orden){ acum+=c.budget; top.push(c); if(total && acum/total>=0.8) break; }
+  const pct = total? (acum/total*100):0;
+  $('paretoTxt').innerHTML = `<b style="color:var(--txt)">${top.length}</b> de <b style="color:var(--txt)">${cats.length}</b> categorías
+    (${top.slice(0,5).map(c=>esc(c.subLabel)).join(', ')}${top.length>5?'…':''}) concentran
+    <b style="color:var(--blue2)">${fmtPct(pct,0)}</b> del budget total FY${FY_ACTUAL} (${fmt(acum)} de ${fmt(total)}).
+    La eficiencia presupuestaria (control del gasto) depende principalmente de estas categorías.`;
+}
+
+function renderAhorro(){
+  const k = kpis(FY_ACTUAL);
+  $('svReal').textContent = fmt(k.ahorroReal);
+  $('svPend').textContent = fmt(k.noEjecutado);
+  $('svProj').textContent = fmt(k.ahorroPotencial);
+}
+
+function renderTendencia(){
+  const bmA = actualMensual(FY_ANTERIOR), bmB = actualMensual(FY_ACTUAL);
+  let ca=0, cb=0; const sa=[], sb=[];
+  const idx = ultimoMesConDato(FY_ACTUAL);
+  for(let i=0;i<12;i++){ ca+=bmA[i]; sa.push(ca); cb += i<=idx? bmB[i]:0; sb.push(i<=idx? cb : null); }
+  destroyChart('tendencia');
+  charts.tendencia = new Chart($('chTendencia'), {
+    type:'line',
+    data:{ labels:MESES,
+      datasets:[
+        {label:`FY${FY_ANTERIOR} acumulado`, data:sa, borderColor:C.mut, backgroundColor:'transparent', tension:.3, borderDash:[5,3]},
+        {label:`FY${FY_ACTUAL} acumulado`, data:sb, borderColor:C.green, backgroundColor:C.green+'1a', tension:.3, fill:true, spanGaps:false},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+}
+
+function renderForecast(){
+  const k = kpis(FY_ACTUAL);
+  destroyChart('forecast');
+  charts.forecast = new Chart($('chForecast'), {
+    type:'bar',
+    data:{ labels:['Budget','Actual YTD','Forecast de cierre'],
+      datasets:[{data:[k.budget,k.actual,k.forecast],
+        backgroundColor:[C.blue, C.green, k.projVariance>0? C.red : C.amber], borderRadius:6}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+      scales:{x:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+  const cards = [
+    {lbl:'Meses con dato', val:k.mesesDato+' / 12'},
+    {lbl:'Forecast FY', val:fmt(k.forecast)},
+    {lbl:'Projected Variance', val:fmt(k.projVariance), cls:k.projVariance>0?'r':'g'},
+    {lbl:'Ahorro potencial', val:fmt(k.ahorroPotencial), cls:'g'},
+  ];
+  $('forecastKpis').innerHTML = cards.map(c=>`<div class="kpi ${c.cls||''}"><div class="num">${c.val}</div><div class="lbl">${c.lbl}</div></div>`).join('');
+}
+
+function renderRiesgosOportunidades(){
+  const cats = categorias(FY_ACTUAL);
+  const riesgos = cats.filter(c=>c.clase==='rojo').sort((a,b)=>(b.actual-b.budgetTranscurrido)-(a.actual-a.budgetTranscurrido)).slice(0,10);
+  const oport = cats.filter(c=>c.clase!=='rojo' && (c.budgetTranscurrido-c.actual)>0).sort((a,b)=>(b.budgetTranscurrido-b.actual)-(a.budgetTranscurrido-a.actual)).slice(0,10);
+  $('riesgosList').innerHTML = riesgos.length? riesgos.map((c,i)=>`<div class="rankrow"><div class="rk">${i+1}</div>
+    <div class="ri"><b>${esc(c.subLabel)}</b><span>${esc(c.cuentaLabel)} · Burn Rate ${fmtPct(c.burn,0)}</span></div>
+    <div class="rv" style="color:var(--red)">+${fmt(c.actual-c.budgetTranscurrido)}</div></div>`).join('')
+    : `<div style="color:var(--mut);font-size:12.8px">Sin categorías en zona de riesgo con los filtros actuales.</div>`;
+  $('oportList').innerHTML = oport.length? oport.map((c,i)=>`<div class="rankrow"><div class="rk">${i+1}</div>
+    <div class="ri"><b>${esc(c.subLabel)}</b><span>${esc(c.cuentaLabel)} · Burn Rate ${fmtPct(c.burn,0)}</span></div>
+    <div class="rv" style="color:var(--green)">${fmt(c.budgetTranscurrido-c.actual)}</div></div>`).join('')
+    : `<div style="color:var(--mut);font-size:12.8px">Sin oportunidades relevantes con los filtros actuales.</div>`;
+}
+
+function renderInsights(){
+  const k = kpis(FY_ACTUAL), kAnt = kpis(FY_ANTERIOR);
+  const cats = categorias(FY_ACTUAL);
+  const idx = ultimoMesConDato(FY_ACTUAL);
+  const insights = [];
+
+  insights.push({tag: k.burnRate>115?'q':k.burnRate<85?'cap':'win', tit:'Velocidad de ejecución del budget',
+    txt:`<p>El FY${FY_ACTUAL} lleva <b>${fmtPct(k.pctTiempo,0)}</b> de tiempo transcurrido y ya ejecutó <b>${fmtPct(k.pctEjec,0)}</b> del budget (Burn Rate <b>${fmtPct(k.burnRate,0)}</b>).</p>
+      <p><b>Impacto:</b> ${k.burnRate>115? 'a este ritmo, el cierre proyectado es '+fmt(k.forecast)+', '+fmt(k.riesgoProyectado)+' por encima del budget aprobado.' : k.burnRate<85? 'hay margen, pero verificar si es ahorro real o gasto no registrado (ver alertas de calidad de dato).' : 'el ritmo está alineado al calendario del FY.'}</p>
+      <p><b>Acción:</b> ${k.burnRate>115? 'revisar las categorías en rojo de la sección de riesgos y frenar compromisos no esenciales.' : 'confirmar cobertura de datos antes de asumir ahorro.'}</p>`});
+
+  const topCat = [...cats].sort((a,b)=>Math.abs(b.variacionRitmo)-Math.abs(a.variacionRitmo))[0];
+  if(topCat) insights.push({tag:topCat.clase==='rojo'?'q':'cap', tit:'Mayor desviación individual',
+    txt:`<p><b>${esc(topCat.subLabel)}</b> (${esc(topCat.cuentaLabel)}) representa la mayor desviación vs. ritmo esperado: ${topCat.variacionRitmo<0? 'sobre-ejecutado en '+fmt(Math.abs(topCat.variacionRitmo)) : 'por debajo del ritmo en '+fmt(topCat.variacionRitmo)}, sobre un budget anual de ${fmt(topCat.budget)}.</p>
+      <p><b>Por qué importa:</b> es la categoría individual con mayor impacto financiero en el resultado del FY.</p>
+      <p><b>Acción:</b> ${topCat.clase==='rojo'? 'validar la causa (¿gasto puntual o tendencia?) antes del cierre de mes.' : 'confirmar si el gasto pendiente ya está comprometido o es ahorro disponible para reasignar.'}</p>`});
+
+  const total = suma(cats.map(c=>c.budget));
+  const orden = [...cats].sort((a,b)=>b.budget-a.budget);
+  let acum=0, n=0; for(const c of orden){ acum+=c.budget; n++; if(total && acum/total>=0.8) break; }
+  insights.push({tag:'op', tit:'Concentración del gasto',
+    txt:`<p><b>${n}</b> de <b>${cats.length}</b> categorías concentran <b>${fmtPct(total?acum/total*100:0,0)}</b> del budget FY${FY_ACTUAL} (${fmt(acum)} de ${fmt(total)}).</p>
+      <p><b>Impacto:</b> el control de gestión debe enfocarse en esas ${n} categorías — allí está la mayor parte del riesgo y de la oportunidad.</p>
+      <p><b>Acción:</b> priorizar revisiones mensuales en esas categorías por encima de las de baja materialidad.</p>`});
+
+  insights.push({tag:'win', tit:'Ahorro real vs. presupuesto no ejecutado',
+    txt:`<p>Del budget FY${FY_ACTUAL}, <b>${fmt(k.ahorroReal)}</b> es ahorro real confirmado (meses ya transcurridos sin gastar), mientras que <b>${fmt(k.noEjecutado)}</b> es presupuesto de meses futuros que aún no corresponde gastar.</p>
+      <p><b>Por qué importa:</b> tratar el segundo monto como "ahorro disponible" sobreestimaría el margen real.</p>
+      <p><b>Acción:</b> reportar ambas cifras por separado en cualquier comunicación de cierre parcial.</p>`});
+
+  if(idx < idxHoyFiscal() && fyHoy()===FY_ACTUAL){
+    insights.push({tag:'q', tit:'Rezago en la carga de datos',
+      txt:`<p>El gasto real cargado llega hasta <b>${MESES[idx]}</b>, pero el calendario ya está en <b>${MESES[idxHoyFiscal()]}</b>.</p>
+        <p><b>Impacto:</b> los KPIs de ejecución y el forecast probablemente están subestimados hasta que se actualice "Seguimiento Budget.xlsx".</p>
+        <p><b>Acción:</b> actualizar la fuente de seguimiento antes de usar este reporte para decisiones de cierre de mes.</p>`});
+  }
+
+  const kAntFull = kAnt;
+  const idxComp = Math.max(0, idx);
+  const antAcumPeriodo = suma(actualMensual(FY_ANTERIOR).slice(0, idxComp+1));
+  const actAcumPeriodo = suma(actualMensual(FY_ACTUAL).slice(0, idxComp+1));
+  const deltaPeriodo = antAcumPeriodo? (actAcumPeriodo-antAcumPeriodo)/antAcumPeriodo*100 : null;
+  if(deltaPeriodo!=null && Math.abs(deltaPeriodo)>10) insights.push({tag: deltaPeriodo>0?'q':'win', tit:'Tendencia interanual (mismo período)',
+    txt:`<p>De ${MESES[0]} a ${MESES[idxComp]}, el gasto real del FY${FY_ACTUAL} es <b>${fmtPct(Math.abs(deltaPeriodo),0)} ${deltaPeriodo>0?'mayor':'menor'}</b> que el del FY${FY_ANTERIOR} en el mismo tramo (${fmt(actAcumPeriodo)} vs. ${fmt(antAcumPeriodo)}).</p>
+      <p><b>Por qué importa:</b> un cambio de esta magnitud frente al año anterior sugiere un cambio estructural de gasto, no ruido mensual.</p>
+      <p><b>Acción:</b> ${deltaPeriodo>0? 'confirmar que el budget FY'+FY_ACTUAL+' contempló ese crecimiento; si no, es una señal temprana de sobre-ejecución al cierre.' : 'validar si la baja responde a ahorro de gestión o a atraso de carga/ejecución.'}</p>`});
+
+  const noPresupuestado = [...cats].filter(c=>c.budget<=0 && c.actual>0);
+  if(noPresupuestado.length) insights.push({tag:'cap', tit:'Gasto sin línea de budget',
+    txt:`<p>${noPresupuestado.length} subcuenta(s) registran gasto real sin una línea correspondiente en "Budgets general" — ej. <b>${esc(noPresupuestado[0].subLabel)}</b> (${fmt(noPresupuestado[0].actual)}).</p>
+      <p><b>Impacto:</b> ese gasto no está siendo controlado contra ningún límite aprobado.</p>
+      <p><b>Acción:</b> formalizar una línea de budget para esa subcuenta o reclasificar el gasto a una cuenta existente.</p>`});
+
+  insights.push({tag:'op', tit:'Proyección de cierre',
+    txt:`<p>Con el ritmo actual (run-rate), el cierre proyectado del FY${FY_ACTUAL} es <b>${fmt(k.forecast)}</b> frente a un budget de <b>${fmt(k.budget)}</b>.</p>
+      <p><b>Impacto:</b> ${k.projVariance>0? 'riesgo de cerrar '+fmt(k.projVariance)+' por encima del budget aprobado.' : 'espacio potencial de '+fmt(k.ahorroPotencial)+' si el ritmo se mantiene.'}</p>
+      <p><b>Acción:</b> ${k.projVariance>0? 'evaluar recortes o solicitar ampliación de budget con anticipación.' : 'evaluar reasignación planificada antes del cierre, no como sobrante de último momento.'}</p>`});
+
+  $('insightsGrid').innerHTML = insights.slice(0,10).map(i=>`<div class="insight"><span class="tag ${i.tag}">${
+    i.tag==='q'?'Riesgo':i.tag==='cap'?'Atención':i.tag==='win'?'Fortaleza':'Oportunidad'}</span>
+    <h4>${esc(i.tit)}</h4>${i.txt}</div>`).join('');
+}
+
+function renderPlanAccion(){
+  const cats = categorias(FY_ACTUAL);
+  const riesgos = cats.filter(c=>c.clase==='rojo').sort((a,b)=>(b.actual-b.budgetTranscurrido)-(a.actual-a.budgetTranscurrido)).slice(0,3);
+  const oport = cats.filter(c=>c.clase!=='rojo' && (c.budgetTranscurrido-c.actual)>0).sort((a,b)=>(b.budgetTranscurrido-b.actual)-(a.budgetTranscurrido-a.actual)).slice(0,2);
+  const k = kpis(FY_ACTUAL);
+  const plan = [];
+  riesgos.forEach(c=>plan.push({tit:`Contener sobre-ejecución en ${c.subLabel}`,
+    txt:`Sobre-ejecutado en ${fmt(c.actual-c.budgetTranscurrido)} vs. ritmo esperado. Revisar compromisos pendientes y validar causa raíz con el responsable de la cuenta.`,
+    prioridad:'Alta', horizonte:'Inmediato'}));
+  if(k.projVariance>0) plan.push({tit:'Evaluar ampliación o recorte de budget FY'+FY_ACTUAL,
+    txt:`Forecast de cierre (${fmt(k.forecast)}) supera el budget aprobado (${fmt(k.budget)}) en ${fmt(k.projVariance)}. Definir plan de contención o solicitud de ampliación con anticipación al cierre.`,
+    prioridad:'Alta', horizonte:'Este trimestre'});
+  oport.forEach(c=>plan.push({tit:`Evaluar reasignación en ${c.subLabel}`,
+    txt:`${fmt(c.budgetTranscurrido-c.actual)} por debajo del ritmo esperado. Confirmar si es ahorro real disponible para reasignar a categorías de riesgo antes del cierre de FY.`,
+    prioridad:'Media', horizonte:'Este trimestre'}));
+  plan.push({tit:'Actualizar cobertura de datos de seguimiento',
+    txt:'Mantener "Seguimiento Budget.xlsx" cargado mes a mes para que el Burn Rate y el forecast reflejen la realidad más reciente, evitando subestimar el gasto por atraso de carga.',
+    prioridad:'Media', horizonte:'Recurrente (mensual)'});
+  $('planList').innerHTML = plan.slice(0,8).map((p,i)=>`<div class="planitem"><div class="pnum">${i+1}</div>
+    <div class="pb"><h4>${esc(p.tit)}</h4><p>${esc(p.txt)}</p>
+    <div class="pmeta"><span class="badge ${p.prioridad==='Alta'?'r':'a'}">Prioridad ${p.prioridad}</span><span class="badge n">${p.horizonte}</span></div></div></div>`).join('');
+}
+
+function renderAlertas(){
+  const alertas = D.alertas || [];
+  $('secAlertas').style.display = alertas.length? '' : 'none';
+  $('alertasList').innerHTML = alertas.map(a=>`<li>${esc(a)}</li>`).join('');
+}
+
+/* ---------------------------- pestaña Seguimiento ---------------------------- */
+function renderSeguimientoTab(){
+  $('segFyToggle').innerHTML = [FY_ACTUAL, FY_ANTERIOR].map(fy=>
+    `<button data-fy="${fy}" class="${fy===segFy?'on':''}">FY${fy}</button>`).join('');
+  [...$('segFyToggle').querySelectorAll('button')].forEach(b=>b.onclick = ()=>{ segFy = +b.dataset.fy; renderSeguimientoTab(); });
+  $('segFyLabel').textContent = `FY${segFy}` + (segFy===FY_ANTERIOR? ' (cerrado)' : ' (en curso)');
+  $('tolTxt').textContent = fmtPct(TOL*100,0);
+
+  const k = kpis(segFy);
+  const bm = budgetMensual(segFy), am = actualMensual(segFy);
+  const idx = ultimoMesConDato(segFy);
+
+  // 1. acumulado
+  let cb=0, ca=0; const sb=[], sa=[];
+  for(let i=0;i<12;i++){ cb+=bm[i]; sb.push(cb); ca += (segFy===FY_ANTERIOR || i<=idx)? am[i] : 0; sa.push((segFy===FY_ANTERIOR || i<=idx)? ca : null); }
+  const varAcum = (sb[11]||0) - (segFy===FY_ANTERIOR? (sa[11]||0) : (sa[idx]!=null? sa[idx] - sb[idx] : 0));
+  $('acumSub').textContent = `Variación acumulada a la fecha: ${fmt(sb[Math.max(idx,0)]-(sa[Math.max(idx,0)]||0))}`;
+  destroyChart('acumulado');
+  charts.acumulado = new Chart($('chAcumulado'), {
+    type:'line',
+    data:{ labels:MESES, datasets:[
+      {label:'Budget acumulado', data:sb, borderColor:C.blue, backgroundColor:C.blue+'1a', tension:.3, fill:true},
+      {label:'Actual acumulado', data:sa, borderColor:C.green, backgroundColor:C.green+'22', tension:.3, fill:true, spanGaps:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+
+  // 2. gauge
+  $('burnNum').textContent = fmtPct(k.burnRate,0);
+  $('burnNum').style.color = k.burnRate>115?C.red:k.burnRate<85?C.amber:C.green;
+  $('burnTxt').textContent = `% ejecutado (${fmtPct(k.pctEjec,0)}) vs. % tiempo transcurrido (${fmtPct(k.pctTiempo,0)})`;
+  const fillPct = Math.min(100, k.pctEjec||0);
+  $('gaugeFill').style.width = fillPct+'%';
+  $('gaugeFill').style.background = k.burnRate>115?C.red:k.burnRate<85?C.amber:C.green;
+  $('gaugeMark').style.left = Math.min(100,k.pctTiempo||0)+'%';
+  $('gaugeMid').textContent = fmtPct(k.pctTiempo,0)+' transcurrido';
+
+  // 3. bullet forecast
+  destroyChart('bullet');
+  charts.bullet = new Chart($('chBullet'), {
+    type:'bar',
+    data:{ labels:['Budget','Actual YTD','Disponible','Forecast FY'],
+      datasets:[{data:[k.budget,k.actual,Math.max(0,k.disponible),k.forecast],
+        backgroundColor:[C.blue,C.green,C.blue2,k.projVariance>0?C.red:C.amber], borderRadius:6}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+      scales:{x:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+
+  // 4. top10 desviaciones (mismo cálculo que sección D pero para segFy)
+  const prevF = F; // categorias() usa F global y fy param; no toca segFy
+  const cats = categorias(segFy).sort((a,b)=>Math.abs(b.variacionRitmo)-Math.abs(a.variacionRitmo)).slice(0,10);
+  destroyChart('top10seg');
+  charts.top10seg = new Chart($('chTop10Seg'), {
+    type:'bar',
+    data:{ labels:cats.map(c=>c.subLabel.length>28? c.subLabel.slice(0,28)+'…':c.subLabel),
+      datasets:[{label:'Variación vs. ritmo esperado', data:cats.map(c=>c.variacionRitmo),
+        backgroundColor:cats.map(c=>colorPorClase(c.clase)), borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>(c.raw>=0?'Por debajo del ritmo: ':'Sobre-ejecutado: ')+fmt(Math.abs(c.raw))}}},
+      scales:{x:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+
+  // 5. mensual agrupado
+  destroyChart('mensual');
+  charts.mensual = new Chart($('chMensual'), {
+    type:'bar',
+    data:{ labels:MESES, datasets:[
+      {label:'Budget', data:bm, backgroundColor:C.blue+'55', borderColor:C.blue, borderWidth:1.5, borderRadius:4},
+      {label:'Actual', data:am.map((v,i)=> (segFy===FY_ANTERIOR||i<=idx)? v : null), backgroundColor:C.green, borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmtK(v)}}}}
+  });
+
+  // 6. matriz de riesgo (bubble)
+  const catsAll = categorias(segFy);
+  const maxBudget = Math.max(1, ...catsAll.map(c=>c.budget));
+  destroyChart('matriz');
+  charts.matriz = new Chart($('chMatriz'), {
+    type:'bubble',
+    data:{ datasets:[{
+      data: catsAll.map(c=>({x:Math.min(200,c.pctEjec||0), y:isFinite(c.burn)?Math.min(300,c.burn):300, r:6+Math.sqrt(c.budget/maxBudget)*22, _c:c})),
+      backgroundColor: catsAll.map(c=>colorPorClase(c.clase)+'aa'),
+      borderColor: catsAll.map(c=>colorPorClase(c.clase)),
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>{
+        const cc=c.raw._c; return [esc(cc.subLabel), 'Ejecutado: '+fmtPct(cc.pctEjec,0), 'Burn Rate: '+fmtPct(cc.burn,0), 'Budget: '+fmt(cc.budget)];
+      }}}},
+      scales:{x:{title:{display:true,text:'% ejecutado'}}, y:{title:{display:true,text:'Burn Rate de la categoría (%)'}}}}
+  });
+
+  renderGantt(segFy, idx);
+}
+
+function renderGantt(fy, idxDato){
+  const filas = bgFor(fy);
+  const esFyPasado = fy < fyHoy() || fy < FY_ACTUAL;
+  const idxLimite = esFyPasado ? 11 : (fy===fyHoy()? idxHoyFiscal()-1 : -1);
+  const acMap = new Map();
+  acFor(fy).forEach(r=>{
+    const key = r.cuentaCod+'|'+r.cod;
+    if(!acMap.has(key)) acMap.set(key, Array(12).fill(0));
+    if(r.mesIdx!=null) acMap.get(key)[r.mesIdx]+=r.monto;
+  });
+  const head = `<thead><tr><th>Entregable / Subcuenta</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>`;
+  const body = filas.map(r=>{
+    const key = r.cuentaCod+'|'+r.cod;
+    const act = acMap.get(key) || Array(12).fill(0);
+    const cells = r.meses.map((bMes,i)=>{
+      const aMes = act[i];
+      let estado;
+      const futuro = fy>fyHoy() || (fy===fyHoy() && i>idxHoyFiscal()) || (fy===FY_ACTUAL && fy>fyHoy());
+      if(esFyPasado) {
+        estado = clasificarCelda(bMes,aMes);
+      } else if(fy===fyHoy()) {
+        estado = i>idxHoyFiscal()? 'pendiente' : clasificarCelda(bMes,aMes);
+      } else {
+        estado = 'pendiente';
+      }
+      return `<td title="${MESES[i]}: budget ${fmt(bMes)} · actual ${fmt(aMes)}"><span class="gcell ${estado}"></span></td>`;
+    }).join('');
+    return `<tr><td>${esc(r.entregable)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.subcuentaLabel)}</span></td>${cells}<td class="tot">${fmt(r.total)}</td></tr>`;
+  }).join('');
+  $('ganttTable').innerHTML = head + '<tbody>' + (body || `<tr><td colspan="14" style="text-align:center;color:var(--mut)">Sin líneas de budget para los filtros actuales.</td></tr>`) + '</tbody>';
+}
+function clasificarCelda(bMes, aMes){
+  if(bMes<=0 && aMes<=0) return 'na';
+  if(bMes>0 && aMes<=0) return 'nodato';
+  if(bMes<=0 && aMes>0) return 'rojo';
+  const r = aMes/bMes;
+  if(r>=1-TOL && r<=1+TOL) return 'verde';
+  return r>1+TOL ? 'rojo' : 'ambar';
+}
+
+/* ============================================================
+   CARGA DE EXCEL (vista previa) — mismo parsing que generar.py
+   ============================================================ */
+function cod3js(t){ if(typeof t!=='string') return null; const cab=t.split(' - ')[0]; const m=cab.match(/(\d{3})$/); return m?m[1]:null; }
+function cod4js(t){ if(typeof t!=='string') return null; const m=t.match(/^(\d{4})/); return m?m[1]:null; }
+function labelSubJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(' - '); return i>=0? t.slice(i+3): t; }
+function labelCuentaJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(':'); return i>=0? t.slice(i+1): t; }
+function parseMontoJs(v){ if(v==null) return 0; if(typeof v==='number') return v; const l=String(v).replace(/[^0-9.\-]/g,''); const f=parseFloat(l); return isFinite(f)?f:0; }
+const MESES_GEN_COLS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+const MES_ING_IDX = {July:0,August:1,September:2,October:3,November:4,December:5,January:6,February:7,March:8,April:9,May:10,June:11};
+
+function parseBudgetGeneral(ws){
+  const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
+  return rows.filter(r=>r['FY']!=null).map(r=>{
+    const meses = MESES_GEN_COLS.map(c=>parseMontoJs(r[c]));
+    return {fy:+r['FY'], entregable:String(r['Entregable / Actividad']||''), descripcion:String(r['Descripción']||''),
+      cuenta:r['Cuenta'], cuentaCod:cod4js(r['Cuenta']), cuentaLabel:labelCuentaJs(r['Cuenta']),
+      subcuenta:r['Subcuenta'], cod:cod3js(r['Subcuenta']), subcuentaLabel:labelSubJs(r['Subcuenta']),
+      meses, total: r['Total']!=null? parseMontoJs(r['Total']) : meses.reduce((a,b)=>a+b,0)};
+  });
+}
+function parseBudgetPersonal(ws){
+  const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
+  return rows.filter(r=>r['FY']!=null).map(r=>{
+    const mesfy = String(r['Mes - FY']||'');
+    const m = mesfy.match(/^(\d{1,2})_/);
+    return {fy:+r['FY'], tipoGasto:r['Tipo de gasto'], descripcion:String(r['Descripción']||''),
+      subcuenta:r['Sub Cuenta'], cod:cod3js(r['Sub Cuenta']), subcuentaLabel:labelSubJs(r['Sub Cuenta']),
+      mesIdx: m? (+m[1]-1) : null, responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
+      monto: parseMontoJs(r['Monto'])};
+  });
+}
+function parseSeguimiento(ws){
+  const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
+  return rows.filter(r=>r['FY']!=null).map(r=>{
+    const monto = parseMontoJs(r['Total']);
+    return {fy:+r['FY'], cuenta:r['Ledger Account'], cuentaCod:cod4js(r['Ledger Account']), cuentaLabel:labelCuentaJs(r['Ledger Account']),
+      subcuenta:r['Spend Category as Worktag'], cod:cod3js(r['Spend Category as Worktag']), subcuentaLabel:labelSubJs(r['Spend Category as Worktag']),
+      mesIdx: MES_ING_IDX[r['Month']] ?? null, mesNombre:r['Month'], fecha:String(r['Fecha']||''),
+      responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
+      monto, memo:String(r['Line Memo']||'')};
+  });
+}
+
+function marcarPreview(on){
+  previewActiva = on;
+  $('previewBar').classList.toggle('on', on);
+}
+
+$('fileAnuales').addEventListener('change', async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const st = $('fileStatusA');
+  try{
+    const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+    const wsG = wb.Sheets['Budgets general'], wsP = wb.Sheets['Budget personales'];
+    if(!wsG || !wsP) throw new Error('El Excel debe tener las hojas "Budgets general" y "Budget personales".');
+    BG = parseBudgetGeneral(wsG); BP = parseBudgetPersonal(wsP);
+    st.textContent = `✔ ${file.name} — ${BG.length} líneas budget, ${BP.length} personales`; st.className='ok';
+    marcarPreview(true); initFiltros(); renderAll();
+  }catch(err){ st.textContent = '✖ '+err.message; st.className='err'; }
+});
+$('fileSeg').addEventListener('change', async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const st = $('fileStatusS');
+  try{
+    const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+    const ws = wb.Sheets['Seguimiento'];
+    if(!ws) throw new Error('El Excel debe tener la hoja "Seguimiento".');
+    AC = parseSeguimiento(ws);
+    st.textContent = `✔ ${file.name} — ${AC.length} filas de gasto real`; st.className='ok';
+    marcarPreview(true); initFiltros(); renderAll();
+  }catch(err){ st.textContent = '✖ '+err.message; st.className='err'; }
+});
+$('btnQuitarPreview').addEventListener('click', ()=>{
+  BG = D.budgetGeneral.slice(); BP = D.budgetPersonal.slice(); AC = D.actual.slice();
+  $('fileAnuales').value=''; $('fileSeg').value='';
+  $('fileStatusA').textContent=''; $('fileStatusS').textContent='';
+  marcarPreview(false); initFiltros(); renderAll();
+});
+
+/* ---------------------------- navegación ---------------------------- */
+$('tabNav').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  [...$('tabNav').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  const v = b.dataset.view;
+  $('viewEjecutivo').style.display = v==='ejecutivo'? '' : 'none';
+  $('viewSeguimiento').style.display = v==='seguimiento'? '' : 'none';
+});
+$('panelToggle').addEventListener('click', ()=>{
+  $('panelBody').classList.toggle('collapsed');
+  $('btnCollapse').classList.toggle('collapsed');
+  $('btnCollapse').innerHTML = $('panelBody').classList.contains('collapsed')? '<span class="chev">▾</span> Desplegar' : '<span class="chev">▾</span> Plegar';
+});
+$('btnAplicar').addEventListener('click', renderAll);
+$('btnLimpiar').addEventListener('click', limpiarFiltros);
+
+/* ---------------------------- init ---------------------------- */
+initFiltros();
+renderAll();
+</script>
+</body>
+</html>
