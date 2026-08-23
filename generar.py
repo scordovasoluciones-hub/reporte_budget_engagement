@@ -93,7 +93,17 @@ def cargar_budget_general(path):
             meses=meses, total=parse_monto(r['Total']) if pd.notna(r['Total']) else sum(meses)))
     return filas
 
-def cargar_budget_personal(path):
+def construir_cuenta_lookup(bg):
+    """cuentaCod -> (cuenta completa 'XXXX:Label', cuentaLabel) tomado de 'Budgets general',
+    que sí trae la Cuenta completa (a diferencia de 'Budget personales', que solo trae Subcuenta)."""
+    lookup = {}
+    for r in bg:
+        if r['cuentaCod'] and r['cuentaCod'] not in lookup:
+            lookup[r['cuentaCod']] = (r['cuenta'], r['cuentaLabel'])
+    return lookup
+
+def cargar_budget_personal(path, cuenta_lookup=None):
+    cuenta_lookup = cuenta_lookup or {}
     df = pd.read_excel(path, sheet_name='Budget personales')
     req = ['FY', 'Tipo de gasto', 'Descripción', 'Sub Cuenta', 'Mes - FY', 'Responsable', 'Monto']
     faltan = [c for c in req if c not in df.columns]
@@ -104,10 +114,13 @@ def cargar_budget_personal(path):
         mesfy = str(r['Mes - FY'])
         m = re.match(r'^(\d{1,2})_', mesfy)
         mes_idx = int(m.group(1)) - 1 if m else None
+        cuenta_cod = cod4(r['Sub Cuenta'])
+        cuenta, cuenta_label = cuenta_lookup.get(cuenta_cod, (cuenta_cod, cuenta_cod))
         filas.append(dict(
             fy=int(r['FY']), tipoGasto=r['Tipo de gasto'],
             descripcion=str(r['Descripción']) if pd.notna(r['Descripción']) else '',
             subcuenta=r['Sub Cuenta'], cod=cod3(r['Sub Cuenta']), subcuentaLabel=label_subcuenta(r['Sub Cuenta']),
+            cuenta=cuenta, cuentaCod=cuenta_cod, cuentaLabel=cuenta_label,
             mesIdx=mes_idx, responsable=r['Responsable'] if pd.notna(r['Responsable']) else 'Sin asignar',
             monto=parse_monto(r['Monto'])))
     return filas
@@ -222,7 +235,7 @@ def main():
     print(f"📄 Seguimiento:     {p_seg}")
 
     bg = cargar_budget_general(p_anuales)
-    bp = cargar_budget_personal(p_anuales)
+    bp = cargar_budget_personal(p_anuales, construir_cuenta_lookup(bg))
     actual, discrepancias = cargar_actual(p_seg)
     alertas, contexto_fecha = validar(bg, actual, discrepancias)
     meta = construir_meta(bg, bp, actual, contexto_fecha)

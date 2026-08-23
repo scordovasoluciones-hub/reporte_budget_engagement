@@ -1102,8 +1102,18 @@ function clasificarCelda(bMes, aMes){
   return r>1+TOL ? 'rojo' : 'ambar';
 }
 
+function tituloDetalleCelda(mesLabel, resp, budgetMap, realMap){
+  const fmtLineas = m => [...m.entries()].sort((x,y)=>y[1]-x[1]).map(([k,v])=>`  ${k}: ${fmt(v)}`);
+  const linB = fmtLineas(budgetMap), linR = fmtLineas(realMap);
+  let out = `${mesLabel} · ${resp}\n\nBudget:\n`;
+  out += linB.length ? linB.join('\n') : '  (sin budget asignado)';
+  out += `\n\nReal:\n`;
+  out += linR.length ? linR.join('\n') : '  (sin gasto registrado)';
+  return esc(out);
+}
+
 function renderMatrizResponsables(fy){
-  const bpFy = BP.filter(p=>p.fy===fy && (!F.sub || p.cod===F.sub) && (!F.resp || p.responsable===F.resp));
+  const bpFy = BP.filter(p=>p.fy===fy && (!F.cuenta || p.cuentaCod===F.cuenta) && (!F.sub || p.cod===F.sub) && (!F.resp || p.responsable===F.resp));
   const wrap = $('matrizRespBody');
   if(!bpFy.length){
     wrap.innerHTML = `<div style="color:var(--mut);font-size:12.8px;padding:8px 0">Sin desagregación de "Budget personales" para FY${fy} — esta vista se activa automáticamente desde el primer FY que tenga ese detalle cargado en "Budgets anuales.xlsx".</div>`;
@@ -1112,10 +1122,24 @@ function renderMatrizResponsables(fy){
   const resps = [...new Set(bpFy.map(p=>p.responsable))];
   const rows = resps.map(resp=>{
     const budget = Array(12).fill(0);
-    bpFy.filter(p=>p.responsable===resp).forEach(p=>{ if(p.mesIdx!=null) budget[p.mesIdx]+=p.monto; });
+    const budgetDet = Array.from({length:12}, ()=>new Map());
+    bpFy.filter(p=>p.responsable===resp).forEach(p=>{
+      if(p.mesIdx!=null){
+        budget[p.mesIdx]+=p.monto;
+        const key = p.cuenta || p.cuentaCod || 'Sin cuenta';
+        budgetDet[p.mesIdx].set(key, (budgetDet[p.mesIdx].get(key)||0)+p.monto);
+      }
+    });
     const real = Array(12).fill(0);
-    acFor(fy).filter(a=>a.responsable===resp).forEach(a=>{ if(a.mesIdx!=null) real[a.mesIdx]+=a.monto; });
-    return {resp, budget, real, total: suma(budget)};
+    const realDet = Array.from({length:12}, ()=>new Map());
+    acFor(fy).filter(a=>a.responsable===resp).forEach(a=>{
+      if(a.mesIdx!=null){
+        real[a.mesIdx]+=a.monto;
+        const key = a.cuenta || a.cuentaCod || 'Sin cuenta';
+        realDet[a.mesIdx].set(key, (realDet[a.mesIdx].get(key)||0)+a.monto);
+      }
+    });
+    return {resp, budget, real, budgetDet, realDet, total: suma(budget)};
   }).sort((a,b)=>b.total-a.total);
   const futuroLimite = fy===fyHoy()? idxHoyFiscal() : (fy>fyHoy()? -1 : 11);
   const head = `<thead><tr><th>Responsable</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total budget</th></tr></thead>`;
@@ -1129,7 +1153,8 @@ function renderMatrizResponsables(fy){
       const clase = futuro? 'empty' : clasificarCelda(b,a);
       const barB = `<div class="mb b" style="height:${b>0?hb:2}px"></div>`;
       const barA = `<div class="mb ${a>0?clase:'empty'}" style="height:${a>0?ha:2}px"></div>`;
-      return `<td title="${MESES[i]} · ${esc(r.resp)}: budget ${fmt(b)} · real ${fmt(a)}"><div class="minibar">${barB}${barA}</div></td>`;
+      const tt = tituloDetalleCelda(MESES[i], r.resp, r.budgetDet[i], r.realDet[i]);
+      return `<td title="${tt}"><div class="minibar">${barB}${barA}</div></td>`;
     }).join('');
     return `<tr><td>${esc(r.resp)}</td>${cells}<td class="rtot">${fmt(r.total)}</td></tr>`;
   }).join('');
@@ -1166,16 +1191,25 @@ function parseBudgetGeneral(ws){
       meses, total: r['Total']!=null? parseMontoJs(r['Total']) : meses.reduce((a,b)=>a+b,0)};
   });
 }
-function parseBudgetPersonal(ws){
+function parseBudgetPersonal(ws, cuentaLookup){
+  cuentaLookup = cuentaLookup || {};
   const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
   return rows.filter(r=>r['FY']!=null).map(r=>{
     const mesfy = String(r['Mes - FY']||'');
     const m = mesfy.match(/^(\d{1,2})_/);
+    const cuentaCod = cod4js(r['Sub Cuenta']);
+    const lk = cuentaLookup[cuentaCod] || [cuentaCod, cuentaCod];
     return {fy:+r['FY'], tipoGasto:r['Tipo de gasto'], descripcion:String(r['Descripción']||''),
       subcuenta:r['Sub Cuenta'], cod:cod3js(r['Sub Cuenta']), subcuentaLabel:labelSubJs(r['Sub Cuenta']),
+      cuenta:lk[0], cuentaCod, cuentaLabel:lk[1],
       mesIdx: m? (+m[1]-1) : null, responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
       monto: parseMontoJs(r['Monto'])};
   });
+}
+function construirCuentaLookup(bg){
+  const lookup = {};
+  bg.forEach(r=>{ if(r.cuentaCod && !lookup[r.cuentaCod]) lookup[r.cuentaCod] = [r.cuenta, r.cuentaLabel]; });
+  return lookup;
 }
 function parseSeguimiento(ws){
   const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
@@ -1201,7 +1235,7 @@ $('fileAnuales').addEventListener('change', async e=>{
     const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
     const wsG = wb.Sheets['Budgets general'], wsP = wb.Sheets['Budget personales'];
     if(!wsG || !wsP) throw new Error('El Excel debe tener las hojas "Budgets general" y "Budget personales".');
-    BG = parseBudgetGeneral(wsG); BP = parseBudgetPersonal(wsP);
+    BG = parseBudgetGeneral(wsG); BP = parseBudgetPersonal(wsP, construirCuentaLookup(BG));
     st.textContent = `✔ ${file.name} — ${BG.length} líneas budget, ${BP.length} personales`; st.className='ok';
     marcarPreview(true); initFiltros(); renderAll();
   }catch(err){ st.textContent = '✖ '+err.message; st.className='err'; }
