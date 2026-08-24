@@ -176,6 +176,7 @@ table.matriz{border-collapse:collapse;width:100%;font-size:11px}
 table.matriz th,table.matriz td{padding:5px 3px;text-align:center;border-bottom:1px solid var(--line)}
 table.matriz th{color:var(--mut);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.2px}
 table.matriz td:first-child,table.matriz th:first-child{text-align:left;min-width:150px;position:sticky;left:0;background:var(--panel2);z-index:1}
+table.matriz.wide td:first-child,table.matriz.wide th:first-child{min-width:220px}
 table.matriz td.rtot{font-family:'Space Grotesk';font-weight:600;font-size:10.5px;color:var(--mut)}
 .minibar{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:32px;width:20px;margin:0 auto}
 .minibar .mb{width:7px;border-radius:2px 2px 0 0;min-height:1px}
@@ -495,6 +496,13 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
         <span><i class="gcell rojo" style="width:11px;height:11px"></i>Sobre-ejecutado</span>
         <span><i class="gcell nodato" style="width:11px;height:11px"></i>Sin gasto registrado (mes ya pasado)</span>
       </div>
+    </div>
+  </section>
+
+  <section id="secMatrizCuenta">
+    <div class="card">
+      <div class="cardhead"><h3>📂 Budget por Cuenta / Subcuenta / Entregable — mes a mes</h3><div class="h3sub">Cada celda: barra azul = budget asignado, barra de color = gasto real. Pasa el cursor para ver el detalle por responsable.</div></div>
+      <div id="matrizCuentaBody"></div>
     </div>
   </section>
 
@@ -1059,6 +1067,7 @@ function renderSeguimientoTab(){
   });
 
   renderGantt(segFy, idx);
+  renderMatrizCuentas(segFy);
   renderMatrizResponsables(segFy);
 }
 
@@ -1100,6 +1109,67 @@ function clasificarCelda(bMes, aMes){
   const r = aMes/bMes;
   if(r>=1-TOL && r<=1+TOL) return 'verde';
   return r>1+TOL ? 'rojo' : 'ambar';
+}
+
+function renderMatrizCuentas(fy){
+  const filas = bgFor(fy);
+  const wrap = $('matrizCuentaBody');
+  if(!filas.length){
+    wrap.innerHTML = `<div style="color:var(--mut);font-size:12.8px;padding:8px 0">Sin líneas de budget para los filtros actuales.</div>`;
+    return;
+  }
+  const acMap = new Map(), acRespMap = new Map();
+  acFor(fy).forEach(a=>{
+    const key = a.cuentaCod+'|'+a.cod;
+    if(!acMap.has(key)){ acMap.set(key, Array(12).fill(0)); acRespMap.set(key, Array.from({length:12}, ()=>new Map())); }
+    if(a.mesIdx!=null){
+      acMap.get(key)[a.mesIdx] += a.monto;
+      const m = acRespMap.get(key)[a.mesIdx];
+      m.set(a.responsable, (m.get(a.responsable)||0)+a.monto);
+    }
+  });
+  const bpFy = BP.filter(p=>p.fy===fy && (!F.cuenta || p.cuentaCod===F.cuenta) && (!F.sub || p.cod===F.sub) && (!F.resp || p.responsable===F.resp));
+  const bpRespMap = new Map();
+  bpFy.forEach(p=>{
+    const key = p.cuentaCod+'|'+p.cod;
+    if(!bpRespMap.has(key)) bpRespMap.set(key, Array.from({length:12}, ()=>new Map()));
+    if(p.mesIdx!=null){
+      const m = bpRespMap.get(key)[p.mesIdx];
+      m.set(p.responsable, (m.get(p.responsable)||0)+p.monto);
+    }
+  });
+  const emptyMonths = () => Array.from({length:12}, ()=>new Map());
+  const rows = filas.map(r=>{
+    const key = r.cuentaCod+'|'+r.cod;
+    return {r, real: acMap.get(key)||Array(12).fill(0),
+      realResp: acRespMap.get(key)||emptyMonths(), budgetResp: bpRespMap.get(key)||emptyMonths()};
+  }).sort((a,b)=>b.r.total-a.r.total);
+  const futuroLimite = fy===fyHoy()? idxHoyFiscal() : (fy>fyHoy()? -1 : 11);
+  const esFyPasado = fy < fyHoy() || fy < FY_ACTUAL;
+  const head = `<thead><tr><th>Entregable / Cuenta · Subcuenta</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total budget</th></tr></thead>`;
+  const body = rows.map(({r, real, realResp, budgetResp})=>{
+    const etiqueta = `${r.entregable} — ${r.cuentaLabel} · ${r.subcuentaLabel}`;
+    const cells = r.meses.map((bMes,i)=>{
+      const aMes = real[i];
+      const futuro = esFyPasado ? false : (i>futuroLimite);
+      const clase = futuro ? 'empty' : clasificarCelda(bMes,aMes);
+      const max = Math.max(bMes,aMes,1);
+      const hb = Math.max(2, Math.round(bMes/max*28));
+      const ha = Math.max(2, Math.round(aMes/max*28));
+      const barB = `<div class="mb b" style="height:${bMes>0?hb:2}px"></div>`;
+      const barA = `<div class="mb ${aMes>0?clase:'empty'}" style="height:${aMes>0?ha:2}px"></div>`;
+      const tt = tituloDetalleCelda(MESES[i], etiqueta, budgetResp[i], realResp[i]);
+      return `<td title="${tt}"><div class="minibar">${barB}${barA}</div></td>`;
+    }).join('');
+    return `<tr><td>${esc(r.entregable)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.cuentaLabel)} · ${esc(r.subcuentaLabel)}</span></td>${cells}<td class="rtot">${fmt(r.total)}</td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="matriz wide">${head}<tbody>${body}</tbody></table></div>
+    <div class="legend">
+      <span><i style="background:var(--blue)"></i>Budget asignado</span>
+      <span><i style="background:var(--green)"></i>Real dentro de lo esperado</span>
+      <span><i style="background:var(--amber)"></i>Real sub-ejecutado</span>
+      <span><i style="background:var(--red)"></i>Real sobre-ejecutado / sin budget asignado</span>
+    </div>`;
 }
 
 function tituloDetalleCelda(mesLabel, resp, budgetMap, realMap){
