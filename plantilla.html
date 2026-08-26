@@ -649,7 +649,10 @@ function pintarFiltrosActivos(){
   const partes = [];
   if(F.cuenta) partes.push('Cuenta: '+$('fCuenta').selectedOptions[0].text);
   if(F.sub) partes.push('Subcuenta: '+$('fSub').selectedOptions[0].text);
-  if(F.resp) partes.push('Responsable: '+F.resp);
+  if(F.resp){
+    const viaBP = respTieneBP(FY_ACTUAL);
+    partes.push('Responsable: '+F.resp+(viaBP? ' (por cuentas asignadas en Budget personales)' : ' (sin asignación en Budget personales — filtrando por nombre en Seguimiento)'));
+  }
   if(F.mesDesde>0 || F.mesHasta<11) partes.push('Meses: '+MESES[F.mesDesde]+' → '+MESES[F.mesHasta]);
   $('activeFilters').textContent = partes.length? 'Filtros activos — '+partes.join(' · ') : '';
 }
@@ -670,25 +673,27 @@ function idxHoyFiscal(){ const h=new Date(); return idxFiscal(h.getMonth()+1); }
 function fyHoy(){ const h=new Date(); return fyDeFecha(h.getMonth()+1, h.getFullYear()); }
 
 /* ---------------------------- agregación filtrada ---------------------------- */
-function bpTieneDatosFy(fy){ return BP.some(p=>p.fy===fy); }
+function respTieneBP(fy){ return !!F.resp && BP.some(p=>p.fy===fy && p.responsable===F.resp); }
 function respCods(fy){
   if(!F.resp) return null;
   return new Set(BP.filter(p=>p.fy===fy && p.responsable===F.resp).map(p=>p.cod));
 }
 /* El filtro de Responsable se resuelve vía "Budget personales" (qué cuentas le fueron
    asignadas), NO por el texto del campo Responsable de "Seguimiento" — los nombres no
-   siempre coinciden entre ambas fuentes. Si el FY no tiene Budget personales cargado
-   (hoy: FY anterior), no hay con qué mapear responsable->cuenta, así que se usa como
-   respaldo el nombre de Seguimiento (mejor que no mostrar nada). */
+   siempre coinciden entre ambas fuentes. La comprobación es POR PERSONA, no solo por FY:
+   si el responsable elegido no tiene ninguna fila en "Budget personales" para ese FY
+   (ej. nombres que solo existen en "Seguimiento" como "ENG" o "PCA - Personal"), no hay
+   con qué mapear responsable->cuenta, así que se usa como respaldo el nombre de
+   Seguimiento (mejor que no mostrar nada). */
 function bgFor(fy){
-  const rs = (F.resp && bpTieneDatosFy(fy)) ? respCods(fy) : null;
+  const rs = respTieneBP(fy) ? respCods(fy) : null;
   return BG.filter(r=> r.fy===fy
     && (!F.cuenta || r.cuentaCod===F.cuenta)
     && (!F.sub || r.cod===F.sub)
     && (!rs || rs.has(r.cod)));
 }
 function acFor(fy){
-  if(F.resp && bpTieneDatosFy(fy)){
+  if(respTieneBP(fy)){
     const rs = respCods(fy);
     return AC.filter(r=> r.fy===fy
       && (!F.cuenta || r.cuentaCod===F.cuenta)
