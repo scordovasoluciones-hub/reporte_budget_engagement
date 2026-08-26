@@ -13,27 +13,37 @@ en el Engagement Site de SharePoint.
     staticwebapp.config.json  <- headers de Azure (sin usar mientras se hospede en GitHub Pages)
     requirements.txt
 
-`generar.py` **no calcula** KPIs, forecast, riesgos ni insights — solo valida las fuentes y
-exporta los datos granulares de las tres hojas usadas. Todo el cálculo (KPIs, comparación
-FY vs FY, burn rate, proyección de cierre, ahorro real vs. no ejecutado, riesgos/oportunidades,
-insights gerenciales, tracker de ejecución) vive en JavaScript dentro de `plantilla.html`,
-para que el mismo motor sirva tanto la vista publicada como la vista previa de un Excel nuevo
-cargado en el navegador.
+`generar.py` **no calcula** KPIs, forecast, riesgos ni insights — solo valida las fuentes,
+agrega el budget granular a nivel Cuenta/Subcuenta/mes, y exporta los datos GRANULARES de
+ambas hojas. Todo el cálculo (KPIs, comparación FY vs FY, burn rate, proyección de cierre,
+ahorro real vs. no ejecutado, riesgos/oportunidades, insights gerenciales, tracker de
+ejecución) vive en JavaScript dentro de `plantilla.html`, para que el mismo motor sirva
+tanto la vista publicada como la vista previa de un Excel nuevo cargado en el navegador.
 
 ## Fuentes de datos
 
 1. **`Budgets anuales.xlsx`** — estático, se actualiza pocas veces al año:
-   - Hoja `Budgets general`: budget aprobado por Cuenta/Subcuenta/mes, para el FY anterior
-     (cerrado) y el FY actual.
-   - Hoja `Budget personales`: asignación del budget del FY actual a responsables, por
-     subcuenta y mes fiscal.
+   - Hoja `Budget`: budget aprobado, granular por FY + Cuenta + Sub Cuenta + mes fiscal +
+     responsable + monto. Cubre todos los FY presentes (no solo el actual). `generar.py`
+     agrega esta hoja a nivel Cuenta/Subcuenta/mes internamente para los KPIs y gráficas
+     generales; el detalle granular por responsable se usa para el filtro de Responsable,
+     la matriz "Budget personal por responsable" y la "Vista por responsable".
+   - (Las hojas `Others` y `datos` del mismo archivo son referencia/staging interna del
+     usuario — no se leen.)
 2. **`Seguimiento Budget.xlsx`** — se actualiza cada mes con el gasto real:
-   - Hoja `Seguimiento`: gasto real transaccional (línea por línea), con FY, cuenta,
-     subcuenta ("Spend Category as Worktag"), mes, responsable y monto.
+   - Hoja `Seguimiento`: gasto real transaccional (línea por línea), con FY, Mes - FY,
+     Cuenta, Subcuenta, Fecha, Responsable y Gasto (monto numérico).
 
-El cruce entre fuentes se hace por el código de 3 dígitos de la subcuenta (`6400-056` ↔
-`SC056`) y el prefijo de 4 dígitos de la cuenta (`6400:...`) — ver comentarios en
-`generar.py` si una subcuenta nueva no aparece mapeada.
+El cruce entre fuentes se hace por el código de 3 dígitos de la subcuenta (`SC056` en
+ambas hojas) y el prefijo de 4 dígitos de la cuenta (`6400:...`, también igual en ambas) —
+ver comentarios en `generar.py` si una subcuenta nueva no aparece mapeada. El mes fiscal se
+lee del campo `Mes - FY` (formato `NN_Mes`, ej. `01_Jul`) presente en ambas hojas.
+
+**Nombres de responsable**: el filtro de Responsable resuelve qué cuentas le corresponden a
+cada persona vía la hoja `Budget` (no por el campo Responsable de `Seguimiento`, que no
+siempre coincide exactamente) — con respaldo al nombre de Seguimiento para cualquier persona
+sin fila en `Budget` para ese FY. Para que el filtro sea 100% preciso, los nombres deben
+escribirse igual en ambas hojas.
 
 ## Funciones del dashboard
 
@@ -57,6 +67,13 @@ El cruce entre fuentes se hace por el código de 3 dígitos de la subcuenta (`64
 - **Ahorro real vs. no ejecutado**: el reporte separa explícitamente ahorro real (budget ya
   exigible sin gastar), presupuesto no ejecutado (meses futuros, no es ahorro) y ahorro
   potencial proyectado (Budget − Forecast).
+- **Matriz "Budget personal por responsable"**: en la pestaña Seguimiento, budget vs. real
+  por responsable y mes (barras + tooltip desglosado por cuenta).
+- **Vista por responsable**: al final de la pestaña Seguimiento, con su propio filtro de
+  responsable (independiente del resto del reporte) — detalle de 4 meses (anterior/actual/
+  +2 siguientes) por cuenta y el acumulado del FY, pensado como insumo para correos de
+  seguimiento personalizados.
+- **Tema claro/oscuro**: botón en el header; la preferencia se guarda en el navegador.
 
 ## Contraseña de acceso
 

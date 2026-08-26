@@ -2,9 +2,10 @@
 """
 Generador del Reporte Budget Engagement · Compassion Perú.
 
-Flujo: lee "Budgets anuales.xlsx" (Budgets general + Budget personales) y
-"Seguimiento Budget.xlsx" (Seguimiento), valida calidad de dato, y exporta los
-datos GRANULARES de las tres fuentes -> plantilla.html -> salida/index.html.
+Flujo: lee "Budgets anuales.xlsx" (hoja "Budget" — granular por FY/cuenta/subcuenta/
+mes/responsable, cubre todos los FY) y "Seguimiento Budget.xlsx" (hoja "Seguimiento" —
+gasto real), valida calidad de dato, agrega el budget a nivel Cuenta/Subcuenta/mes, y
+exporta los datos GRANULARES de ambas fuentes -> plantilla.html -> salida/index.html.
 
 Todo el cálculo (KPIs, comparación FY vs FY, proyección de cierre, burn rate,
 riesgos/oportunidades, insights) vive en JavaScript dentro de plantilla.html,
@@ -24,10 +25,6 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 # ─────────────────────────── CONFIGURACIÓN ───────────────────────────
 TOLERANCIA_GANTT = 0.15   # ±15% del budget del mes = "dentro de lo esperado" (verde)
 MESES_FISCALES = ['Jul','Ago','Set','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun']
-MESES_GENERAL_COLS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
-MES_ING_A_IDX = {m: i for i, m in enumerate(
-    ['July','August','September','October','November','December',
-     'January','February','March','April','May','June'])}
 
 # ─────────────────────────── UTILIDADES ───────────────────────────
 def cod3(texto):
@@ -75,82 +72,75 @@ def fy_de_fecha(mes_calendario, anio_calendario):
     """FY Jul-Jun: meses Jul-Dic pertenecen al FY siguiente."""
     return anio_calendario + 1 if mes_calendario >= 7 else anio_calendario
 
-# ─────────────────────────── CARGA: BUDGETS ANUALES ───────────────────────────
-def cargar_budget_general(path):
-    df = pd.read_excel(path, sheet_name='Budgets general')
-    req = ['FY', 'Entregable / Actividad', 'Descripción', 'Cuenta', 'Subcuenta', 'Total'] + MESES_GENERAL_COLS
+# ─────────────────────────── CARGA: BUDGET (hoja única, granular, ambos FY) ───────────────────────────
+def mes_idx_de_codigo(texto):
+    """'01_Jul' / '02_AGO' -> 0, 1... (índice fiscal, Jul=0)."""
+    m = re.match(r'^(\d{1,2})_', str(texto))
+    return int(m.group(1)) - 1 if m else None
+
+def cargar_budget(path):
+    df = pd.read_excel(path, sheet_name='Budget')
+    req = ['FY', 'Tipo de gasto', 'Descripción', 'Cuenta', 'Sub Cuenta', 'Mes - FY', 'Responsable', 'Monto']
     faltan = [c for c in req if c not in df.columns]
     if faltan:
-        raise SystemExit(f"❌ Faltan columnas en 'Budgets general': {faltan}")
+        raise SystemExit(f"❌ Faltan columnas en la hoja 'Budget': {faltan}")
     filas = []
     for _, r in df.iterrows():
-        meses = [parse_monto(r[c]) for c in MESES_GENERAL_COLS]
-        filas.append(dict(
-            fy=int(r['FY']), entregable=str(r['Entregable / Actividad']),
-            descripcion=str(r['Descripción']) if pd.notna(r['Descripción']) else '',
-            cuenta=r['Cuenta'], cuentaCod=cod4(r['Cuenta']), cuentaLabel=label_cuenta(r['Cuenta']),
-            subcuenta=r['Subcuenta'], cod=cod3(r['Subcuenta']), subcuentaLabel=label_subcuenta(r['Subcuenta']),
-            meses=meses, total=parse_monto(r['Total']) if pd.notna(r['Total']) else sum(meses)))
-    return filas
-
-def construir_cuenta_lookup(bg):
-    """cuentaCod -> (cuenta completa 'XXXX:Label', cuentaLabel) tomado de 'Budgets general',
-    que sí trae la Cuenta completa (a diferencia de 'Budget personales', que solo trae Subcuenta)."""
-    lookup = {}
-    for r in bg:
-        if r['cuentaCod'] and r['cuentaCod'] not in lookup:
-            lookup[r['cuentaCod']] = (r['cuenta'], r['cuentaLabel'])
-    return lookup
-
-def cargar_budget_personal(path, cuenta_lookup=None):
-    cuenta_lookup = cuenta_lookup or {}
-    df = pd.read_excel(path, sheet_name='Budget personales')
-    req = ['FY', 'Tipo de gasto', 'Descripción', 'Sub Cuenta', 'Mes - FY', 'Responsable', 'Monto']
-    faltan = [c for c in req if c not in df.columns]
-    if faltan:
-        raise SystemExit(f"❌ Faltan columnas en 'Budget personales': {faltan}")
-    filas = []
-    for _, r in df.iterrows():
-        mesfy = str(r['Mes - FY'])
-        m = re.match(r'^(\d{1,2})_', mesfy)
-        mes_idx = int(m.group(1)) - 1 if m else None
-        cuenta_cod = cod4(r['Sub Cuenta'])
-        cuenta, cuenta_label = cuenta_lookup.get(cuenta_cod, (cuenta_cod, cuenta_cod))
+        if pd.isna(r['FY']):
+            continue
         filas.append(dict(
             fy=int(r['FY']), tipoGasto=r['Tipo de gasto'],
             descripcion=str(r['Descripción']) if pd.notna(r['Descripción']) else '',
+            cuenta=r['Cuenta'], cuentaCod=cod4(r['Cuenta']), cuentaLabel=label_cuenta(r['Cuenta']),
             subcuenta=r['Sub Cuenta'], cod=cod3(r['Sub Cuenta']), subcuentaLabel=label_subcuenta(r['Sub Cuenta']),
-            cuenta=cuenta, cuentaCod=cuenta_cod, cuentaLabel=cuenta_label,
-            mesIdx=mes_idx, responsable=r['Responsable'] if pd.notna(r['Responsable']) else 'Sin asignar',
+            mesIdx=mes_idx_de_codigo(r['Mes - FY']),
+            responsable=r['Responsable'] if pd.notna(r['Responsable']) else 'Sin asignar',
             monto=parse_monto(r['Monto'])))
+    return filas
+
+def construir_budget_general(budget):
+    """Agrega el detalle granular de 'Budget' (por responsable/mes) a nivel (FY, Cuenta, Subcuenta),
+    con un array de 12 meses — la hoja ya no trae una fila "general" separada por Entregable, así que
+    esta es la única fuente para los totales de budget por cuenta/mes."""
+    agg = {}
+    for r in budget:
+        key = (r['fy'], r['cuentaCod'], r['cod'])
+        if key not in agg:
+            agg[key] = dict(fy=r['fy'], cuenta=r['cuenta'], cuentaCod=r['cuentaCod'], cuentaLabel=r['cuentaLabel'],
+                             subcuenta=r['subcuenta'], cod=r['cod'], subcuentaLabel=r['subcuentaLabel'],
+                             meses=[0.0] * 12)
+        if r['mesIdx'] is not None and 0 <= r['mesIdx'] < 12:
+            agg[key]['meses'][r['mesIdx']] += r['monto']
+    filas = list(agg.values())
+    for f in filas:
+        f['total'] = sum(f['meses'])
     return filas
 
 # ─────────────────────────── CARGA: SEGUIMIENTO (gasto real) ───────────────────────────
 def cargar_actual(path):
     df = pd.read_excel(path, sheet_name='Seguimiento')
-    req = ['FY', 'Ledger Account', 'Spend Category as Worktag', 'Line Memo', 'Total',
-           'Year', 'Month', 'Fecha', 'Responsable']
+    req = ['FY', 'Mes - FY', 'Cuenta', 'Subcuenta', 'Line Memo', 'Fecha', 'Responsable', 'Gasto']
     faltan = [c for c in req if c not in df.columns]
     if faltan:
         raise SystemExit(f"❌ Faltan columnas en 'Seguimiento': {faltan}")
-    filas, discrepancias = [], 0
+    filas = []
     for _, r in df.iterrows():
-        monto = parse_monto(r['Total'])
-        if 'PRO' in df.columns and pd.notna(r['PRO']) and abs(float(r['PRO']) - monto) > 0.01:
-            discrepancias += 1
-        mes_idx = MES_ING_A_IDX.get(str(r['Month']))
+        if pd.isna(r['FY']):
+            continue
         filas.append(dict(
-            fy=int(r['FY']), cuenta=r['Ledger Account'], cuentaCod=cod4(r['Ledger Account']),
-            cuentaLabel=label_cuenta(r['Ledger Account']),
-            subcuenta=r['Spend Category as Worktag'], cod=cod3(r['Spend Category as Worktag']),
-            subcuentaLabel=label_subcuenta(r['Spend Category as Worktag']),
-            mesIdx=mes_idx, mesNombre=r['Month'], fecha=str(r['Fecha']),
+            fy=int(r['FY']), cuenta=r['Cuenta'], cuentaCod=cod4(r['Cuenta']),
+            cuentaLabel=label_cuenta(r['Cuenta']),
+            subcuenta=r['Subcuenta'], cod=cod3(r['Subcuenta']),
+            subcuentaLabel=label_subcuenta(r['Subcuenta']),
+            mesIdx=mes_idx_de_codigo(r['Mes - FY']),
+            mesNombre=r['Mes'] if 'Mes' in df.columns and pd.notna(r.get('Mes')) else None,
+            fecha=str(r['Fecha']) if pd.notna(r['Fecha']) else '',
             responsable=r['Responsable'] if pd.notna(r['Responsable']) else 'Sin asignar',
-            monto=monto, memo=str(r['Line Memo']) if pd.notna(r['Line Memo']) else ''))
-    return filas, discrepancias
+            monto=parse_monto(r['Gasto']), memo=str(r['Line Memo']) if pd.notna(r['Line Memo']) else ''))
+    return filas
 
 # ─────────────────────────── VALIDACIÓN DE CALIDAD ───────────────────────────
-def validar(bg, actual, discrepancias_monto):
+def validar(bg, actual):
     alertas = []
     claves_budget = {(f['fy'], f['cuentaCod'], f['cod']) for f in bg}
     no_presupuestado = {}
@@ -161,16 +151,17 @@ def validar(bg, actual, discrepancias_monto):
             no_presupuestado[kk] = no_presupuestado.get(kk, 0) + a['monto']
     for (fy, cuenta, sub), monto in no_presupuestado.items():
         alertas.append(f"FY{fy}: gasto real de S/ {monto:,.2f} en '{cuenta} / {sub}' no tiene línea "
-                        f"correspondiente en 'Budgets general' — revisar si falta mapear la subcuenta.")
+                        f"correspondiente en la hoja 'Budget' — revisar si falta mapear la subcuenta.")
 
     negativos = [a for a in actual if a['monto'] < 0]
     if negativos:
         alertas.append(f"{len(negativos)} filas de 'Seguimiento' tienen monto negativo (reversos/correcciones), "
                         f"por S/ {sum(a['monto'] for a in negativos):,.2f} en total — ya incluidas en el gasto neto.")
 
-    if discrepancias_monto:
-        alertas.append(f"{discrepancias_monto} filas de 'Seguimiento' tienen la columna numérica de monto "
-                        f"distinta al texto de 'Total' — se usó el texto de 'Total' como fuente de verdad.")
+    sin_mes = [a for a in actual if a['mesIdx'] is None]
+    if sin_mes:
+        alertas.append(f"{len(sin_mes)} filas de 'Seguimiento' no tienen un 'Mes - FY' reconocible "
+                        f"(formato esperado 'NN_Mes', ej. '01_Jul') — se excluyen de los totales mensuales.")
 
     # meses sin ninguna fila de actual dentro del FY, comparado contra el mes fiscal de hoy
     hoy = dt.date.today()
@@ -234,10 +225,10 @@ def main():
     print(f"📄 Budgets anuales: {p_anuales}")
     print(f"📄 Seguimiento:     {p_seg}")
 
-    bg = cargar_budget_general(p_anuales)
-    bp = cargar_budget_personal(p_anuales, construir_cuenta_lookup(bg))
-    actual, discrepancias = cargar_actual(p_seg)
-    alertas, contexto_fecha = validar(bg, actual, discrepancias)
+    bp = cargar_budget(p_anuales)
+    bg = construir_budget_general(bp)
+    actual = cargar_actual(p_seg)
+    alertas, contexto_fecha = validar(bg, actual)
     meta = construir_meta(bg, bp, actual, contexto_fecha)
 
     D = dict(budgetGeneral=bg, budgetPersonal=bp, actual=actual, meta=meta, alertas=alertas)

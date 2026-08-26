@@ -547,7 +547,7 @@ table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:u
         <select id="vrResp"><option value="">Selecciona un responsable</option></select>
       </div>
     </div>
-    <p class="lead">Mes anterior, mes actual y los dos meses siguientes, por cuenta/subcuenta asignada según "Budget personales" (FY<span id="vrFyLabel"></span>) — y el acumulado del FY a la fecha por cuenta. Este filtro es independiente: no afecta ninguna otra gráfica del reporte.</p>
+    <p class="lead">Mes anterior, mes actual y los dos meses siguientes, por cuenta/subcuenta asignada al responsable en la hoja "Budget" (FY<span id="vrFyLabel"></span>) — y el acumulado del FY a la fecha por cuenta. Este filtro es independiente: no afecta ninguna otra gráfica del reporte.</p>
     <div id="vrEmpty" style="color:var(--mut);font-size:13px;padding:8px 0">Selecciona un responsable arriba para ver su detalle.</div>
     <div id="vrBody" style="display:none">
       <div class="grid2">
@@ -651,7 +651,7 @@ function pintarFiltrosActivos(){
   if(F.sub) partes.push('Subcuenta: '+$('fSub').selectedOptions[0].text);
   if(F.resp){
     const viaBP = respTieneBP(FY_ACTUAL);
-    partes.push('Responsable: '+F.resp+(viaBP? ' (por cuentas asignadas en Budget personales)' : ' (sin asignación en Budget personales — filtrando por nombre en Seguimiento)'));
+    partes.push('Responsable: '+F.resp+(viaBP? ' (por cuentas asignadas en la hoja Budget)' : ' (sin asignación en la hoja Budget — filtrando por nombre en Seguimiento)'));
   }
   if(F.mesDesde>0 || F.mesHasta<11) partes.push('Meses: '+MESES[F.mesDesde]+' → '+MESES[F.mesHasta]);
   $('activeFilters').textContent = partes.length? 'Filtros activos — '+partes.join(' · ') : '';
@@ -678,10 +678,10 @@ function respCods(fy){
   if(!F.resp) return null;
   return new Set(BP.filter(p=>p.fy===fy && p.responsable===F.resp).map(p=>p.cod));
 }
-/* El filtro de Responsable se resuelve vía "Budget personales" (qué cuentas le fueron
+/* El filtro de Responsable se resuelve vía la hoja "Budget" (qué cuentas le fueron
    asignadas), NO por el texto del campo Responsable de "Seguimiento" — los nombres no
    siempre coinciden entre ambas fuentes. La comprobación es POR PERSONA, no solo por FY:
-   si el responsable elegido no tiene ninguna fila en "Budget personales" para ese FY
+   si el responsable elegido no tiene ninguna fila en "Budget" para ese FY
    (ej. nombres que solo existen en "Seguimiento" como "ENG" o "PCA - Personal"), no hay
    con qué mapear responsable->cuenta, así que se usa como respaldo el nombre de
    Seguimiento (mejor que no mostrar nada). */
@@ -1026,7 +1026,7 @@ function renderInsights(){
 
   const noPresupuestado = [...cats].filter(c=>c.budget<=0 && c.actual>0);
   if(noPresupuestado.length) insights.push({tag:'cap', tit:'Gasto sin línea de budget',
-    txt:`<p>${noPresupuestado.length} subcuenta(s) registran gasto real sin una línea correspondiente en "Budgets general" — ej. <b>${esc(noPresupuestado[0].subLabel)}</b> (${fmt(noPresupuestado[0].actual)}).</p>
+    txt:`<p>${noPresupuestado.length} subcuenta(s) registran gasto real sin una línea correspondiente en la hoja "Budget" — ej. <b>${esc(noPresupuestado[0].subLabel)}</b> (${fmt(noPresupuestado[0].actual)}).</p>
       <p><b>Impacto:</b> ese gasto no está siendo controlado contra ningún límite aprobado.</p>
       <p><b>Acción:</b> formalizar una línea de budget para esa subcuenta o reclasificar el gasto a una cuenta existente.</p>`});
 
@@ -1179,7 +1179,7 @@ function renderGantt(fy, idxDato){
     if(!acMap.has(key)) acMap.set(key, Array(12).fill(0));
     if(r.mesIdx!=null) acMap.get(key)[r.mesIdx]+=r.monto;
   });
-  const head = `<thead><tr><th>Entregable / Subcuenta</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>`;
+  const head = `<thead><tr><th>Cuenta / Subcuenta</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>`;
   const body = filas.map(r=>{
     const key = r.cuentaCod+'|'+r.cod;
     const act = acMap.get(key) || Array(12).fill(0);
@@ -1197,7 +1197,7 @@ function renderGantt(fy, idxDato){
       const numsHtml = (bMes>0||aMes>0) ? `<div class="gnums"><span class="gb">${fmtKShort(bMes)||'—'}</span><span class="gr">${fmtKShort(aMes)||'—'}</span></div>` : '';
       return `<td title="${MESES[i]}: budget ${fmt(bMes)} · real ${fmt(aMes)}"><div class="gwrap"><span class="gcell ${estado}"></span>${numsHtml}</div></td>`;
     }).join('');
-    return `<tr><td>${esc(r.entregable)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.subcuentaLabel)}</span></td>${cells}<td class="tot">${fmt(r.total)}</td></tr>`;
+    return `<tr><td>${esc(r.subcuentaLabel)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.cuentaLabel)}</span></td>${cells}<td class="tot">${fmt(r.total)}</td></tr>`;
   }).join('');
   $('ganttTable').innerHTML = head + '<tbody>' + (body || `<tr><td colspan="14" style="text-align:center;color:var(--mut)">Sin líneas de budget para los filtros actuales.</td></tr>`) + '</tbody>';
 }
@@ -1224,7 +1224,7 @@ function renderMatrizResponsables(fy){
   const bpFy = BP.filter(p=>p.fy===fy && (!F.cuenta || p.cuentaCod===F.cuenta) && (!F.sub || p.cod===F.sub) && (!F.resp || p.responsable===F.resp));
   const wrap = $('matrizRespBody');
   if(!bpFy.length){
-    wrap.innerHTML = `<div style="color:var(--mut);font-size:12.8px;padding:8px 0">Sin desagregación de "Budget personales" para FY${fy} — esta vista se activa automáticamente desde el primer FY que tenga ese detalle cargado en "Budgets anuales.xlsx".</div>`;
+    wrap.innerHTML = `<div style="color:var(--mut);font-size:12.8px;padding:8px 0">Sin filas de la hoja "Budget" para FY${fy} en "Budgets anuales.xlsx".</div>`;
     return;
   }
   const resps = [...new Set(bpFy.map(p=>p.responsable))];
@@ -1274,7 +1274,7 @@ function renderMatrizResponsables(fy){
       <span><i style="background:var(--red)"></i>Real sobre-ejecutado / sin budget asignado</span>
     </div>
     <div class="caveat" style="margin-top:14px"><h4>⚠ Nota de calidad de dato</h4><ul>
-      <li>El cruce con el gasto real es por coincidencia exacta del nombre de responsable entre "Budget personales" y "Seguimiento". Un responsable en S/ 0 de real puede significar que aún no gastó, o que su gasto quedó registrado bajo otro nombre (ej. el bucket "ENG").</li>
+      <li>El cruce con el gasto real es por coincidencia exacta del nombre de responsable entre la hoja "Budget" y "Seguimiento". Un responsable en S/ 0 de real puede significar que aún no gastó, o que su gasto quedó registrado bajo otro nombre (ej. el bucket "ENG").</li>
     </ul></div>`;
 }
 
@@ -1341,7 +1341,7 @@ function renderVistaResponsable(){
   const rows = filaDatos.length ? filaDatos.map(({info,vals})=>{
     const celdas = vals.map(v=>`<td>${v.budget?fmt(v.budget):'—'}</td><td>${v.real?fmt(v.real):'—'}</td>`).join('');
     return `<tr><td>${esc(info.cuentaLabel)}</td><td>${esc(info.subLabel)}</td>${celdas}</tr>`;
-  }).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--mut)">Sin cuentas asignadas a ${esc(VR.resp)} en "Budget personales".</td></tr>`;
+  }).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--mut)">Sin cuentas asignadas a ${esc(VR.resp)} en la hoja "Budget".</td></tr>`;
   $('vrTablaMeses').innerHTML = `<thead><tr><th>Cuenta</th><th>Subcuenta</th>${headMeses}</tr><tr><th></th><th></th>${headSub}</tr></thead><tbody>${rows}</tbody>`;
 
   // acumulado FY actual a la fecha
@@ -1376,49 +1376,38 @@ function cod4js(t){ if(typeof t!=='string') return null; const m=t.match(/^(\d{4
 function labelSubJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(' - '); return i>=0? t.slice(i+3): t; }
 function labelCuentaJs(t){ if(typeof t!=='string') return t; const i=t.indexOf(':'); return i>=0? t.slice(i+1): t; }
 function parseMontoJs(v){ if(v==null) return 0; if(typeof v==='number') return isFinite(v)?v:0; const l=String(v).replace(/[^0-9.\-]/g,''); const f=parseFloat(l); return isFinite(f)?f:0; }
-const MESES_GEN_COLS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
-const MES_ING_IDX = {July:0,August:1,September:2,October:3,November:4,December:5,January:6,February:7,March:8,April:9,May:10,June:11};
+function mesIdxDeCodigoJs(v){ const m=String(v==null?'':v).match(/^(\d{1,2})_/); return m? (+m[1]-1) : null; }
 
-function parseBudgetGeneral(ws){
+function parseBudget(ws){
   const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
-  return rows.filter(r=>r['FY']!=null).map(r=>{
-    const meses = MESES_GEN_COLS.map(c=>parseMontoJs(r[c]));
-    return {fy:+r['FY'], entregable:String(r['Entregable / Actividad']||''), descripcion:String(r['Descripción']||''),
-      cuenta:r['Cuenta'], cuentaCod:cod4js(r['Cuenta']), cuentaLabel:labelCuentaJs(r['Cuenta']),
-      subcuenta:r['Subcuenta'], cod:cod3js(r['Subcuenta']), subcuentaLabel:labelSubJs(r['Subcuenta']),
-      meses, total: r['Total']!=null? parseMontoJs(r['Total']) : meses.reduce((a,b)=>a+b,0)};
-  });
+  return rows.filter(r=>r['FY']!=null).map(r=>({
+    fy:+r['FY'], tipoGasto:r['Tipo de gasto'], descripcion:String(r['Descripción']||''),
+    cuenta:r['Cuenta'], cuentaCod:cod4js(r['Cuenta']), cuentaLabel:labelCuentaJs(r['Cuenta']),
+    subcuenta:r['Sub Cuenta'], cod:cod3js(r['Sub Cuenta']), subcuentaLabel:labelSubJs(r['Sub Cuenta']),
+    mesIdx: mesIdxDeCodigoJs(r['Mes - FY']),
+    responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
+    monto: parseMontoJs(r['Monto'])
+  }));
 }
-function parseBudgetPersonal(ws, cuentaLookup){
-  cuentaLookup = cuentaLookup || {};
-  const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
-  return rows.filter(r=>r['FY']!=null).map(r=>{
-    const mesfy = String(r['Mes - FY']||'');
-    const m = mesfy.match(/^(\d{1,2})_/);
-    const cuentaCod = cod4js(r['Sub Cuenta']);
-    const lk = cuentaLookup[cuentaCod] || [cuentaCod, cuentaCod];
-    return {fy:+r['FY'], tipoGasto:r['Tipo de gasto'], descripcion:String(r['Descripción']||''),
-      subcuenta:r['Sub Cuenta'], cod:cod3js(r['Sub Cuenta']), subcuentaLabel:labelSubJs(r['Sub Cuenta']),
-      cuenta:lk[0], cuentaCod, cuentaLabel:lk[1],
-      mesIdx: m? (+m[1]-1) : null, responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
-      monto: parseMontoJs(r['Monto'])};
+function construirBudgetGeneral(budget){
+  const agg = new Map();
+  budget.forEach(r=>{
+    const key = r.fy+'|'+r.cuentaCod+'|'+r.cod;
+    if(!agg.has(key)) agg.set(key, {fy:r.fy, cuenta:r.cuenta, cuentaCod:r.cuentaCod, cuentaLabel:r.cuentaLabel,
+      subcuenta:r.subcuenta, cod:r.cod, subcuentaLabel:r.subcuentaLabel, meses:Array(12).fill(0)});
+    if(r.mesIdx!=null && r.mesIdx>=0 && r.mesIdx<12) agg.get(key).meses[r.mesIdx] += r.monto;
   });
-}
-function construirCuentaLookup(bg){
-  const lookup = {};
-  bg.forEach(r=>{ if(r.cuentaCod && !lookup[r.cuentaCod]) lookup[r.cuentaCod] = [r.cuenta, r.cuentaLabel]; });
-  return lookup;
+  return [...agg.values()].map(f=>Object.assign(f, {total: suma(f.meses)}));
 }
 function parseSeguimiento(ws){
   const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
-  return rows.filter(r=>r['FY']!=null).map(r=>{
-    const monto = parseMontoJs(r['Total']);
-    return {fy:+r['FY'], cuenta:r['Ledger Account'], cuentaCod:cod4js(r['Ledger Account']), cuentaLabel:labelCuentaJs(r['Ledger Account']),
-      subcuenta:r['Spend Category as Worktag'], cod:cod3js(r['Spend Category as Worktag']), subcuentaLabel:labelSubJs(r['Spend Category as Worktag']),
-      mesIdx: MES_ING_IDX[r['Month']] ?? null, mesNombre:r['Month'], fecha:String(r['Fecha']||''),
-      responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
-      monto, memo:String(r['Line Memo']||'')};
-  });
+  return rows.filter(r=>r['FY']!=null).map(r=>({
+    fy:+r['FY'], cuenta:r['Cuenta'], cuentaCod:cod4js(r['Cuenta']), cuentaLabel:labelCuentaJs(r['Cuenta']),
+    subcuenta:r['Subcuenta'], cod:cod3js(r['Subcuenta']), subcuentaLabel:labelSubJs(r['Subcuenta']),
+    mesIdx: mesIdxDeCodigoJs(r['Mes - FY']), mesNombre:r['Mes']||null, fecha:String(r['Fecha']||''),
+    responsable: r['Responsable']!=null? r['Responsable'] : 'Sin asignar',
+    monto: parseMontoJs(r['Gasto']), memo:String(r['Line Memo']||'')
+  }));
 }
 
 function marcarPreview(on){
@@ -1431,10 +1420,10 @@ $('fileAnuales').addEventListener('change', async e=>{
   const st = $('fileStatusA');
   try{
     const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
-    const wsG = wb.Sheets['Budgets general'], wsP = wb.Sheets['Budget personales'];
-    if(!wsG || !wsP) throw new Error('El Excel debe tener las hojas "Budgets general" y "Budget personales".');
-    BG = parseBudgetGeneral(wsG); BP = parseBudgetPersonal(wsP, construirCuentaLookup(BG));
-    st.textContent = `✔ ${file.name} — ${BG.length} líneas budget, ${BP.length} personales`; st.className='ok';
+    const wsB = wb.Sheets['Budget'];
+    if(!wsB) throw new Error('El Excel debe tener la hoja "Budget".');
+    BP = parseBudget(wsB); BG = construirBudgetGeneral(BP);
+    st.textContent = `✔ ${file.name} — ${BP.length} filas de budget`; st.className='ok';
     marcarPreview(true); initFiltros(); renderAll();
   }catch(err){ st.textContent = '✖ '+err.message; st.className='err'; }
 });
