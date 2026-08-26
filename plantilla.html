@@ -217,6 +217,11 @@ table.dtab{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
 table.dtab th,table.dtab td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line)}
 table.dtab th:first-child,table.dtab td:first-child,table.dtab th:nth-child(2),table.dtab td:nth-child(2){text-align:left}
 table.dtab th{color:var(--mut);font-weight:600;font-size:10.3px;text-transform:uppercase;letter-spacing:.3px}
+table.dtab.vrtab{font-size:10.5px}
+table.dtab.vrtab th,table.dtab.vrtab td{padding:6px 7px}
+table.dtab.vrtab th.vrb,table.dtab.vrtab td.vrb{color:var(--blue2)}
+table.dtab.vrtab th.vrr,table.dtab.vrtab td.vrr{color:var(--green)}
+table.dtab.vrtab td:first-child,table.dtab.vrtab td:nth-child(2){color:var(--txt);font-size:11px}
 
 .savingsgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
 .svbox{background:var(--sunken);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
@@ -649,10 +654,7 @@ function pintarFiltrosActivos(){
   const partes = [];
   if(F.cuenta) partes.push('Cuenta: '+$('fCuenta').selectedOptions[0].text);
   if(F.sub) partes.push('Subcuenta: '+$('fSub').selectedOptions[0].text);
-  if(F.resp){
-    const viaBP = respTieneBP(FY_ACTUAL);
-    partes.push('Responsable: '+F.resp+(viaBP? ' (por cuentas asignadas en la hoja Budget)' : ' (sin asignación en la hoja Budget — filtrando por nombre en Seguimiento)'));
-  }
+  if(F.resp) partes.push('Responsable: '+F.resp);
   if(F.mesDesde>0 || F.mesHasta<11) partes.push('Meses: '+MESES[F.mesDesde]+' → '+MESES[F.mesHasta]);
   $('activeFilters').textContent = partes.length? 'Filtros activos — '+partes.join(' · ') : '';
 }
@@ -673,33 +675,32 @@ function idxHoyFiscal(){ const h=new Date(); return idxFiscal(h.getMonth()+1); }
 function fyHoy(){ const h=new Date(); return fyDeFecha(h.getMonth()+1, h.getFullYear()); }
 
 /* ---------------------------- agregación filtrada ---------------------------- */
-function respTieneBP(fy){ return !!F.resp && BP.some(p=>p.fy===fy && p.responsable===F.resp); }
-function respCods(fy){
-  if(!F.resp) return null;
-  return new Set(BP.filter(p=>p.fy===fy && p.responsable===F.resp).map(p=>p.cod));
-}
-/* El filtro de Responsable se resuelve vía la hoja "Budget" (qué cuentas le fueron
-   asignadas), NO por el texto del campo Responsable de "Seguimiento" — los nombres no
-   siempre coinciden entre ambas fuentes. La comprobación es POR PERSONA, no solo por FY:
-   si el responsable elegido no tiene ninguna fila en "Budget" para ese FY
-   (ej. nombres que solo existen en "Seguimiento" como "ENG" o "PCA - Personal"), no hay
-   con qué mapear responsable->cuenta, así que se usa como respaldo el nombre de
-   Seguimiento (mejor que no mostrar nada). */
+/* El filtro de Responsable compara por nombre EXACTO contra el campo Responsable de cada
+   fuente (Budget y Seguimiento) — ya no vía "categorías asignadas", porque en FY2027 casi
+   todas las subcuentas (Travel, Meals, Education...) son un pool compartido por 8-11
+   personas a la vez: sumar "todo el gasto real de las categorías que tiene asignadas"
+   duplicaba el gasto del equipo entero en cada persona filtrada. Validado contra un filtro
+   simple por nombre en Excel: con nombres alineados entre hojas, coincidencia exacta. */
 function bgFor(fy){
-  const rs = respTieneBP(fy) ? respCods(fy) : null;
+  if(F.resp){
+    // budget = SOLO la porción propia de este responsable (BP), agregada por cuenta/subcuenta
+    // — no el total de la categoría compartida con el resto del equipo.
+    const map = new Map();
+    BP.filter(p=>p.fy===fy && p.responsable===F.resp
+        && (!F.cuenta || p.cuentaCod===F.cuenta) && (!F.sub || p.cod===F.sub))
+      .forEach(p=>{
+        const key = p.cuentaCod+'|'+p.cod;
+        if(!map.has(key)) map.set(key, {fy, cuenta:p.cuenta, cuentaCod:p.cuentaCod, cuentaLabel:p.cuentaLabel,
+          subcuenta:p.subcuenta, cod:p.cod, subcuentaLabel:p.subcuentaLabel, meses:Array(12).fill(0)});
+        if(p.mesIdx!=null) map.get(key).meses[p.mesIdx] += p.monto;
+      });
+    return [...map.values()].map(r=>Object.assign(r, {total: suma(r.meses)}));
+  }
   return BG.filter(r=> r.fy===fy
     && (!F.cuenta || r.cuentaCod===F.cuenta)
-    && (!F.sub || r.cod===F.sub)
-    && (!rs || rs.has(r.cod)));
+    && (!F.sub || r.cod===F.sub));
 }
 function acFor(fy){
-  if(respTieneBP(fy)){
-    const rs = respCods(fy);
-    return AC.filter(r=> r.fy===fy
-      && (!F.cuenta || r.cuentaCod===F.cuenta)
-      && (!F.sub || r.cod===F.sub)
-      && rs.has(r.cod));
-  }
   return AC.filter(r=> r.fy===fy
     && (!F.cuenta || r.cuentaCod===F.cuenta)
     && (!F.sub || r.cod===F.sub)
@@ -742,7 +743,7 @@ function categorias(fy){
     if(!map.has(key)) map.set(key,{cuentaCod:r.cuentaCod,cuentaLabel:r.cuentaLabel,cod:r.cod,subLabel:r.subcuentaLabel,
       budget:0,meses:Array(12).fill(0),actual:0,actualMeses:Array(12).fill(0)});
     const c = map.get(key);
-    c.budget += r.total; r.meses.forEach((v,i)=>{ if(mesOk(i)) c.meses[i]+=v; });
+    r.meses.forEach((v,i)=>{ if(mesOk(i)){ c.meses[i]+=v; c.budget+=v; } });
   });
   acFor(fy).forEach(r=>{
     const key = r.cuentaCod+'|'+r.cod;
@@ -1179,10 +1180,27 @@ function renderGantt(fy, idxDato){
     if(!acMap.has(key)) acMap.set(key, Array(12).fill(0));
     if(r.mesIdx!=null) acMap.get(key)[r.mesIdx]+=r.monto;
   });
+  // Desglose por responsable para el tooltip (quién compone el gasto) — independiente del
+  // filtro de Responsable, así el hover siempre muestra a todo el equipo detrás de la celda.
+  const acRespMap = new Map(), budgetRespMap = new Map();
+  AC.filter(a=>a.fy===fy && (!F.cuenta||a.cuentaCod===F.cuenta) && (!F.sub||a.cod===F.sub)).forEach(a=>{
+    const key = a.cuentaCod+'|'+a.cod;
+    if(!acRespMap.has(key)) acRespMap.set(key, Array.from({length:12}, ()=>new Map()));
+    if(a.mesIdx!=null){ const m=acRespMap.get(key)[a.mesIdx]; m.set(a.responsable, (m.get(a.responsable)||0)+a.monto); }
+  });
+  BP.filter(p=>p.fy===fy && (!F.cuenta||p.cuentaCod===F.cuenta) && (!F.sub||p.cod===F.sub)).forEach(p=>{
+    const key = p.cuentaCod+'|'+p.cod;
+    if(!budgetRespMap.has(key)) budgetRespMap.set(key, Array.from({length:12}, ()=>new Map()));
+    if(p.mesIdx!=null){ const m=budgetRespMap.get(key)[p.mesIdx]; m.set(p.responsable, (m.get(p.responsable)||0)+p.monto); }
+  });
+  const mapaVacio = Array.from({length:12}, ()=>new Map());
   const head = `<thead><tr><th>Cuenta / Subcuenta</th>${MESES.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>`;
   const body = filas.map(r=>{
     const key = r.cuentaCod+'|'+r.cod;
     const act = acMap.get(key) || Array(12).fill(0);
+    const respReal = acRespMap.get(key) || mapaVacio;
+    const respBudget = budgetRespMap.get(key) || mapaVacio;
+    const etiqueta = `${r.subcuentaLabel} — ${r.cuentaLabel}`;
     const cells = r.meses.map((bMes,i)=>{
       const aMes = act[i];
       let estado;
@@ -1195,7 +1213,8 @@ function renderGantt(fy, idxDato){
         estado = 'pendiente';
       }
       const numsHtml = (bMes>0||aMes>0) ? `<div class="gnums"><span class="gb">${fmtKShort(bMes)||'—'}</span><span class="gr">${fmtKShort(aMes)||'—'}</span></div>` : '';
-      return `<td title="${MESES[i]}: budget ${fmt(bMes)} · real ${fmt(aMes)}"><div class="gwrap"><span class="gcell ${estado}"></span>${numsHtml}</div></td>`;
+      const tt = tituloDetalleCelda(MESES[i], etiqueta, respBudget[i], respReal[i]);
+      return `<td title="${tt}"><div class="gwrap"><span class="gcell ${estado}"></span>${numsHtml}</div></td>`;
     }).join('');
     return `<tr><td>${esc(r.subcuentaLabel)}<br><span style="color:var(--dim);font-size:10.5px">${esc(r.cuentaLabel)}</span></td>${cells}<td class="tot">${fmt(r.total)}</td></tr>`;
   }).join('');
@@ -1330,19 +1349,20 @@ function renderVistaResponsable(){
     const vals = meses4.map(m=>{
       let budget=0, real=0;
       BP.forEach(p=>{ if(p.fy===m.fy && p.responsable===VR.resp && (p.cuentaCod+'|'+p.cod)===key && p.mesIdx===m.idx) budget+=p.monto; });
-      AC.forEach(a=>{ if(a.fy===m.fy && (a.cuentaCod+'|'+a.cod)===key && a.mesIdx===m.idx) real+=a.monto; });
+      AC.forEach(a=>{ if(a.fy===m.fy && a.responsable===VR.resp && (a.cuentaCod+'|'+a.cod)===key && a.mesIdx===m.idx) real+=a.monto; });
       return {budget, real};
     });
     return {info, vals, totalBudget: suma(vals.map(v=>v.budget))};
   }).sort((a,b)=>b.totalBudget-a.totalBudget);
 
   const headMeses = etiquetas4.map(e=>`<th colspan="2">${e}</th>`).join('');
-  const headSub = etiquetas4.map(()=>`<th>Budget</th><th>Real</th>`).join('');
+  const headSub = etiquetas4.map(()=>`<th class="vrb">Budget</th><th class="vrr">Real</th>`).join('');
   const rows = filaDatos.length ? filaDatos.map(({info,vals})=>{
-    const celdas = vals.map(v=>`<td>${v.budget?fmt(v.budget):'—'}</td><td>${v.real?fmt(v.real):'—'}</td>`).join('');
+    const celdas = vals.map(v=>`<td class="vrb">${v.budget?fmt(v.budget):'—'}</td><td class="vrr">${v.real?fmt(v.real):'—'}</td>`).join('');
     return `<tr><td>${esc(info.cuentaLabel)}</td><td>${esc(info.subLabel)}</td>${celdas}</tr>`;
   }).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--mut)">Sin cuentas asignadas a ${esc(VR.resp)} en la hoja "Budget".</td></tr>`;
   $('vrTablaMeses').innerHTML = `<thead><tr><th>Cuenta</th><th>Subcuenta</th>${headMeses}</tr><tr><th></th><th></th>${headSub}</tr></thead><tbody>${rows}</tbody>`;
+  $('vrTablaMeses').classList.add('vrtab');
 
   // acumulado FY actual a la fecha
   const hastaIdx = hoyFy > FY_ACTUAL ? 11 : (hoyFy === FY_ACTUAL ? hoyIdx : -1);
@@ -1350,7 +1370,7 @@ function renderVistaResponsable(){
   const acumDatos = [...keysActual.entries()].map(([key,info])=>{
     let budget=0, real=0;
     BP.forEach(p=>{ if(p.fy===FY_ACTUAL && p.responsable===VR.resp && (p.cuentaCod+'|'+p.cod)===key && p.mesIdx!=null && p.mesIdx<=hastaIdx) budget+=p.monto; });
-    AC.forEach(a=>{ if(a.fy===FY_ACTUAL && (a.cuentaCod+'|'+a.cod)===key && a.mesIdx!=null && a.mesIdx<=hastaIdx) real+=a.monto; });
+    AC.forEach(a=>{ if(a.fy===FY_ACTUAL && a.responsable===VR.resp && (a.cuentaCod+'|'+a.cod)===key && a.mesIdx!=null && a.mesIdx<=hastaIdx) real+=a.monto; });
     return {info, budget, real};
   }).sort((a,b)=>b.budget-a.budget);
   $('vrAcumSub').textContent = `Budget acumulado a la fecha (${MESES[Math.max(hastaIdx,0)]}) vs. real acumulado, por cuenta asignada — FY${FY_ACTUAL}`;
@@ -1381,7 +1401,7 @@ function mesIdxDeCodigoJs(v){ const m=String(v==null?'':v).match(/^(\d{1,2})_/);
 function parseBudget(ws){
   const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
   return rows.filter(r=>r['FY']!=null).map(r=>({
-    fy:+r['FY'], tipoGasto:r['Tipo de gasto'], descripcion:String(r['Descripción']||''),
+    fy:+r['FY'], tipoGasto: r['Tipo de gasto']!=null? r['Tipo de gasto'] : r['Área'], descripcion:String(r['Descripción']||''),
     cuenta:r['Cuenta'], cuentaCod:cod4js(r['Cuenta']), cuentaLabel:labelCuentaJs(r['Cuenta']),
     subcuenta:r['Sub Cuenta'], cod:cod3js(r['Sub Cuenta']), subcuentaLabel:labelSubJs(r['Sub Cuenta']),
     mesIdx: mesIdxDeCodigoJs(r['Mes - FY']),

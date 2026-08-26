@@ -80,7 +80,10 @@ def mes_idx_de_codigo(texto):
 
 def cargar_budget(path):
     df = pd.read_excel(path, sheet_name='Budget')
-    req = ['FY', 'Tipo de gasto', 'Descripción', 'Cuenta', 'Sub Cuenta', 'Mes - FY', 'Responsable', 'Monto']
+    # 'Tipo de gasto' se renombró a 'Área' en una limpieza posterior del archivo —
+    # se acepta cualquiera de las dos para no depender de que el nombre no vuelva a cambiar.
+    col_tipo = 'Tipo de gasto' if 'Tipo de gasto' in df.columns else 'Área'
+    req = ['FY', col_tipo, 'Descripción', 'Cuenta', 'Sub Cuenta', 'Mes - FY', 'Responsable', 'Monto']
     faltan = [c for c in req if c not in df.columns]
     if faltan:
         raise SystemExit(f"❌ Faltan columnas en la hoja 'Budget': {faltan}")
@@ -89,7 +92,7 @@ def cargar_budget(path):
         if pd.isna(r['FY']):
             continue
         filas.append(dict(
-            fy=int(r['FY']), tipoGasto=r['Tipo de gasto'],
+            fy=int(r['FY']), tipoGasto=r[col_tipo],
             descripcion=str(r['Descripción']) if pd.notna(r['Descripción']) else '',
             cuenta=r['Cuenta'], cuentaCod=cod4(r['Cuenta']), cuentaLabel=label_cuenta(r['Cuenta']),
             subcuenta=r['Sub Cuenta'], cod=cod3(r['Sub Cuenta']), subcuentaLabel=label_subcuenta(r['Sub Cuenta']),
