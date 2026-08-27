@@ -116,6 +116,10 @@ footer{margin-top:50px;padding-top:22px;border-top:1px solid var(--line);color:v
 .fgroup select{background:var(--sunken);color:var(--txt);border:1px solid var(--line);
   border-radius:8px;padding:7px 9px;font-family:'Inter',sans-serif;font-size:12.5px;min-width:140px}
 .fgroup select:focus{outline:1px solid var(--blue)}
+.areachecks{display:flex;flex-direction:column;gap:3px;background:var(--sunken);border:1px solid var(--line);
+  border-radius:8px;padding:7px 10px;min-width:170px}
+.areachk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--txt);cursor:pointer;white-space:nowrap}
+.areachk input{accent-color:var(--blue);cursor:pointer}
 .fbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px 13px;
   font-family:'Space Grotesk';font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
 .fbtn:hover{border-color:var(--blue);color:var(--blue2)}
@@ -313,9 +317,11 @@ table.dtab.vrtab td:first-child,table.dtab.vrtab td:nth-child(2){color:var(--txt
   </div>
   <div class="collapsible" id="panelBody">
     <div class="filterbar">
+      <div class="fgroup"><label>FY (pestaña Seguimiento)</label><div class="toggle" id="fFyToggle"></div></div>
       <div class="fgroup"><label>Cuenta</label><select id="fCuenta"><option value="">Todas</option></select></div>
       <div class="fgroup"><label>Subcuenta</label><select id="fSub"><option value="">Todas</option></select></div>
       <div class="fgroup"><label>Responsable</label><select id="fResp"><option value="">Todos</option></select></div>
+      <div class="fgroup"><label>Área (varias a la vez)</label><div class="areachecks" id="fArea"></div></div>
       <div class="fgroup"><label>Mes fiscal desde</label><select id="fMesDesde"></select></div>
       <div class="fgroup"><label>Mes fiscal hasta</label><select id="fMesHasta"></select></div>
       <button class="fbtn primary" id="btnAplicar">Aplicar filtros</button>
@@ -465,14 +471,9 @@ table.dtab.vrtab td:first-child,table.dtab.vrtab td:nth-child(2){color:var(--txt
 <div id="viewSeguimiento" style="display:none">
 
   <section style="margin-top:24px">
-    <div class="cardhead" style="justify-content:space-between">
-      <div>
-        <div class="eyebrow">Seguimiento mensual</div>
-        <h2 style="margin-bottom:0">Avance de ejecución — <span id="segFyLabel"></span></h2>
-      </div>
-      <div class="toggle" id="segFyToggle"></div>
-    </div>
-    <p class="lead">6 gráficas de seguimiento + tracker de ejecución por categoría con alertas de color.</p>
+    <div class="eyebrow">Seguimiento mensual</div>
+    <h2 style="margin-bottom:0">Avance de ejecución — <span id="segFyLabel"></span></h2>
+    <p class="lead">6 gráficas de seguimiento + tracker de ejecución por categoría con alertas de color. El FY se elige con el filtro general de arriba.</p>
   </section>
 
   <section>
@@ -620,19 +621,29 @@ $('themeToggle').addEventListener('click', ()=>{
 });
 
 /* ---------------------------- filtros ---------------------------- */
-let F = {cuenta:'', sub:'', resp:'', mesDesde:0, mesHasta:11};
+let F = {cuenta:'', sub:'', resp:'', area:new Set(), mesDesde:0, mesHasta:11};
 let segFy = FY_ACTUAL;
 
 function initFiltros(){
   const cuentas = [...new Map(BG.map(r=>[r.cuentaCod, r.cuentaLabel])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
   const subs = [...new Map(BG.map(r=>[r.cod, r.subcuentaLabel])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
   const resps = [...new Set([...BP.map(r=>r.responsable), ...AC.map(r=>r.responsable)])].sort();
+  const areas = [...new Set(BP.map(r=>r.tipoGasto))].filter(Boolean).sort();
   fillSelect('fCuenta', cuentas.map(([v,l])=>({v,l})), 'Todas');
   fillSelect('fSub', subs.map(([v,l])=>({v,l})), 'Todas');
   fillSelect('fResp', resps.map(v=>({v,l:v})), 'Todos');
   fillSelect('fMesDesde', MESES.map((m,i)=>({v:i,l:m})));
   fillSelect('fMesHasta', MESES.map((m,i)=>({v:i,l:m})));
   $('fMesHasta').value = 11;
+  const areaSel = new Set([...F.area]);
+  $('fArea').innerHTML = areas.map(a=>`<label class="areachk"><input type="checkbox" value="${esc(a)}" ${areaSel.has(a)?'checked':''}> ${esc(a)}</label>`).join('');
+  if(!$('fFyToggle').dataset.bound){
+    $('fFyToggle').dataset.bound = '1';
+  }
+  $('fFyToggle').innerHTML = [FY_ACTUAL, FY_ANTERIOR].map(fy=>
+    `<button data-fy="${fy}" class="${fy===segFy?'on':''}">FY${fy}</button>`).join('');
+  [...$('fFyToggle').querySelectorAll('button')].forEach(b=>b.onclick = ()=>{ segFy = +b.dataset.fy;
+    [...$('fFyToggle').children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); renderAll(); });
 }
 function fillSelect(id, items, primeraEtq){
   const el = $(id); const cur = el.value;
@@ -643,11 +654,13 @@ function fillSelect(id, items, primeraEtq){
 
 function leerFiltros(){
   F.cuenta = $('fCuenta').value; F.sub = $('fSub').value; F.resp = $('fResp').value;
+  F.area = new Set([...$('fArea').querySelectorAll('input:checked')].map(i=>i.value));
   F.mesDesde = +$('fMesDesde').value; F.mesHasta = +$('fMesHasta').value;
   if(F.mesDesde>F.mesHasta){ const t=F.mesDesde; F.mesDesde=F.mesHasta; F.mesHasta=t; }
 }
 function limpiarFiltros(){
   $('fCuenta').value=''; $('fSub').value=''; $('fResp').value=''; $('fMesDesde').value=0; $('fMesHasta').value=11;
+  $('fArea').querySelectorAll('input:checked').forEach(i=>i.checked=false);
   leerFiltros(); renderAll();
 }
 function pintarFiltrosActivos(){
@@ -655,6 +668,7 @@ function pintarFiltrosActivos(){
   if(F.cuenta) partes.push('Cuenta: '+$('fCuenta').selectedOptions[0].text);
   if(F.sub) partes.push('Subcuenta: '+$('fSub').selectedOptions[0].text);
   if(F.resp) partes.push('Responsable: '+F.resp);
+  if(F.area.size) partes.push('Área: '+[...F.area].join(', ')+' (solo filtra Budget — Seguimiento no tiene esta columna)');
   if(F.mesDesde>0 || F.mesHasta<11) partes.push('Meses: '+MESES[F.mesDesde]+' → '+MESES[F.mesHasta]);
   $('activeFilters').textContent = partes.length? 'Filtros activos — '+partes.join(' · ') : '';
 }
@@ -682,25 +696,26 @@ function fyHoy(){ const h=new Date(); return fyDeFecha(h.getMonth()+1, h.getFull
    duplicaba el gasto del equipo entero en cada persona filtrada. Validado contra un filtro
    simple por nombre en Excel: con nombres alineados entre hojas, coincidencia exacta. */
 function bgFor(fy){
-  if(F.resp){
-    // budget = SOLO la porción propia de este responsable (BP), agregada por cuenta/subcuenta
-    // — no el total de la categoría compartida con el resto del equipo.
-    const map = new Map();
-    BP.filter(p=>p.fy===fy && p.responsable===F.resp
-        && (!F.cuenta || p.cuentaCod===F.cuenta) && (!F.sub || p.cod===F.sub))
-      .forEach(p=>{
-        const key = p.cuentaCod+'|'+p.cod;
-        if(!map.has(key)) map.set(key, {fy, cuenta:p.cuenta, cuentaCod:p.cuentaCod, cuentaLabel:p.cuentaLabel,
-          subcuenta:p.subcuenta, cod:p.cod, subcuentaLabel:p.subcuentaLabel, meses:Array(12).fill(0)});
-        if(p.mesIdx!=null) map.get(key).meses[p.mesIdx] += p.monto;
-      });
-    return [...map.values()].map(r=>Object.assign(r, {total: suma(r.meses)}));
-  }
-  return BG.filter(r=> r.fy===fy
-    && (!F.cuenta || r.cuentaCod===F.cuenta)
-    && (!F.sub || r.cod===F.sub));
+  // Siempre se agrega en vivo desde BP (granular), nunca desde el BG pre-agregado — así
+  // Cuenta/Subcuenta/Responsable/Área se aplican de forma consistente sin importar la
+  // combinación de filtros activa (el BG pre-agregado no distingue responsable ni área).
+  const map = new Map();
+  BP.filter(p=>p.fy===fy
+      && (!F.cuenta || p.cuentaCod===F.cuenta)
+      && (!F.sub || p.cod===F.sub)
+      && (!F.resp || p.responsable===F.resp)
+      && (!F.area || F.area.size===0 || F.area.has(p.tipoGasto)))
+    .forEach(p=>{
+      const key = p.cuentaCod+'|'+p.cod;
+      if(!map.has(key)) map.set(key, {fy, cuenta:p.cuenta, cuentaCod:p.cuentaCod, cuentaLabel:p.cuentaLabel,
+        subcuenta:p.subcuenta, cod:p.cod, subcuentaLabel:p.subcuentaLabel, meses:Array(12).fill(0)});
+      if(p.mesIdx!=null) map.get(key).meses[p.mesIdx] += p.monto;
+    });
+  return [...map.values()].map(r=>Object.assign(r, {total: suma(r.meses)}));
 }
 function acFor(fy){
+  // Seguimiento no tiene columna de Área, así que el filtro de Área NO restringe el real
+  // (ver nota en "Filtros activos" cuando está activo) — solo restringe el Budget.
   return AC.filter(r=> r.fy===fy
     && (!F.cuenta || r.cuentaCod===F.cuenta)
     && (!F.sub || r.cod===F.sub)
@@ -1072,9 +1087,6 @@ function renderAlertas(){
 
 /* ---------------------------- pestaña Seguimiento ---------------------------- */
 function renderSeguimientoTab(){
-  $('segFyToggle').innerHTML = [FY_ACTUAL, FY_ANTERIOR].map(fy=>
-    `<button data-fy="${fy}" class="${fy===segFy?'on':''}">FY${fy}</button>`).join('');
-  [...$('segFyToggle').querySelectorAll('button')].forEach(b=>b.onclick = ()=>{ segFy = +b.dataset.fy; renderSeguimientoTab(); });
   $('segFyLabel').textContent = `FY${segFy}` + (segFy===FY_ANTERIOR? ' (cerrado)' : ' (en curso)');
   $('tolTxt').textContent = fmtPct(TOL*100,0);
 

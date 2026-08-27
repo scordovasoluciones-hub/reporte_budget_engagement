@@ -39,11 +39,23 @@ ambas hojas) y el prefijo de 4 dígitos de la cuenta (`6400:...`, también igual
 ver comentarios en `generar.py` si una subcuenta nueva no aparece mapeada. El mes fiscal se
 lee del campo `Mes - FY` (formato `NN_Mes`, ej. `01_Jul`) presente en ambas hojas.
 
-**Nombres de responsable**: el filtro de Responsable resuelve qué cuentas le corresponden a
-cada persona vía la hoja `Budget` (no por el campo Responsable de `Seguimiento`, que no
-siempre coincide exactamente) — con respaldo al nombre de Seguimiento para cualquier persona
-sin fila en `Budget` para ese FY. Para que el filtro sea 100% preciso, los nombres deben
-escribirse igual en ambas hojas.
+**Nombres de responsable**: el filtro de Responsable compara por **nombre exacto** contra el
+campo Responsable de cada hoja (Budget y Seguimiento). Se intentó primero resolverlo vía
+"qué cuentas tiene asignadas en Budget", pero se descartó: en FY2027 casi todas las
+subcuentas (Travel, Meals, Education...) son un pool compartido por 8-11 personas a la vez,
+así que ese enfoque sumaba el gasto de todo el equipo en cada persona filtrada. Con
+coincidencia exacta de nombre, el filtro fue validado al centavo contra un filtro simple por
+nombre en Excel. Para que sea preciso, los nombres deben escribirse igual en ambas hojas.
+
+**Filtro de Área**: la hoja `Budget` trae una columna Área/Tipo de gasto (`ENG - Personal`,
+`ENG - Área`, `PCA - Personal`) — el filtro permite marcar varias a la vez. Solo restringe el
+**Budget**: `Seguimiento` no tiene esa columna, así que el gasto real no se puede atribuir a
+un Área con precisión (el reporte lo deja explícito en "Filtros activos" cuando está activo,
+en vez de aproximarlo y arriesgar otro doble conteo).
+
+**Filtro de FY**: es general (vive en el panel de arriba, no dentro de una pestaña), pero solo
+controla qué FY analiza la pestaña "Seguimiento" — "Análisis Ejecutivo" siempre muestra
+ambos FY a la vez, porque comparar el FY actual contra el anterior es su propósito.
 
 ## Funciones del dashboard
 
